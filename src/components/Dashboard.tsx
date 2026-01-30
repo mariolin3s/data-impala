@@ -6,7 +6,8 @@ import { AlertCard } from './AlertCard';
 import { EventGrid } from './EventGrid';
 import { DateSelector } from './DateSelector';
 import { AlertFilters } from './AlertFilters';
-import { Activity, CheckCircle2, AlertTriangle, XCircle, Bell } from 'lucide-react';
+import { TrendChart } from './TrendChart';
+import { Activity, CheckCircle2, AlertTriangle, XCircle, Bell, TrendingUp } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export function Dashboard() {
@@ -110,6 +111,14 @@ export function Dashboard() {
             value={summary.critical}
             icon={<XCircle className="h-6 w-6" />}
             variant="critical"
+          />
+        </div>
+
+        {/* Trend Chart */}
+        <div className="mb-8">
+          <TrendChart 
+            selectedEvent={selectedEvent} 
+            selectedPlatform={selectedPlatform} 
           />
         </div>
 
