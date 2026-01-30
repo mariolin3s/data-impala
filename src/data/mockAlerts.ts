@@ -1,6 +1,8 @@
 import { AlertEvent } from '@/types/alert';
 
+// Generate mock weekly data for trend analysis
 export const mockAlerts: AlertEvent[] = [
+  // 2026-01-29 (Wednesday)
   {
     date: '2026-01-29',
     event: 'page_view',
@@ -158,3 +160,76 @@ export const mockAlerts: AlertEvent[] = [
     minimo: 9000,
   },
 ];
+
+// Weekly trend data for charts
+export interface TrendDataPoint {
+  date: string;
+  dayName: string;
+  web: number;
+  ios: number;
+  android: number;
+  total: number;
+}
+
+export const weeklyTrendData: TrendDataPoint[] = [
+  { date: '2026-01-23', dayName: 'Jue', web: 52000, ios: 31000, android: 24000, total: 107000 },
+  { date: '2026-01-24', dayName: 'Vie', web: 48000, ios: 29000, android: 22000, total: 99000 },
+  { date: '2026-01-25', dayName: 'Sáb', web: 35000, ios: 22000, android: 18000, total: 75000 },
+  { date: '2026-01-26', dayName: 'Dom', web: 32000, ios: 20000, android: 16000, total: 68000 },
+  { date: '2026-01-27', dayName: 'Lun', web: 55000, ios: 32000, android: 25000, total: 112000 },
+  { date: '2026-01-28', dayName: 'Mar', web: 53000, ios: 30000, android: 24000, total: 107000 },
+  { date: '2026-01-29', dayName: 'Mié', web: 45230, ios: 28500, android: 22100, total: 95830 },
+];
+
+export interface EventTrendData {
+  date: string;
+  dayName: string;
+  value: number;
+  min: number;
+  max: number;
+  status: 'verde' | 'naranja' | 'rojo';
+}
+
+export const getEventTrendData = (eventName: string, platform?: string): EventTrendData[] => {
+  // Simulated data for different events
+  const trendsByEvent: Record<string, EventTrendData[]> = {
+    page_view: [
+      { date: '2026-01-23', dayName: 'Jue', value: 48000, min: 35000, max: 50000, status: 'verde' },
+      { date: '2026-01-24', dayName: 'Vie', value: 46000, min: 35000, max: 50000, status: 'verde' },
+      { date: '2026-01-25', dayName: 'Sáb', value: 32000, min: 25000, max: 40000, status: 'verde' },
+      { date: '2026-01-26', dayName: 'Dom', value: 30000, min: 25000, max: 40000, status: 'verde' },
+      { date: '2026-01-27', dayName: 'Lun', value: 52000, min: 35000, max: 50000, status: 'naranja' },
+      { date: '2026-01-28', dayName: 'Mar', value: 47000, min: 35000, max: 50000, status: 'verde' },
+      { date: '2026-01-29', dayName: 'Mié', value: 45230, min: 35000, max: 50000, status: 'verde' },
+    ],
+    purchase: [
+      { date: '2026-01-23', dayName: 'Jue', value: 1650, min: 1200, max: 1800, status: 'verde' },
+      { date: '2026-01-24', dayName: 'Vie', value: 1720, min: 1200, max: 1800, status: 'verde' },
+      { date: '2026-01-25', dayName: 'Sáb', value: 1100, min: 800, max: 1400, status: 'verde' },
+      { date: '2026-01-26', dayName: 'Dom', value: 950, min: 800, max: 1400, status: 'verde' },
+      { date: '2026-01-27', dayName: 'Lun', value: 1580, min: 1200, max: 1800, status: 'verde' },
+      { date: '2026-01-28', dayName: 'Mar', value: 1420, min: 1200, max: 1800, status: 'verde' },
+      { date: '2026-01-29', dayName: 'Mié', value: 890, min: 1200, max: 1800, status: 'rojo' },
+    ],
+    add_to_cart: [
+      { date: '2026-01-23', dayName: 'Jue', value: 4500, min: 3800, max: 5000, status: 'verde' },
+      { date: '2026-01-24', dayName: 'Vie', value: 4800, min: 3800, max: 5000, status: 'verde' },
+      { date: '2026-01-25', dayName: 'Sáb', value: 3200, min: 2500, max: 4000, status: 'verde' },
+      { date: '2026-01-26', dayName: 'Dom', value: 2900, min: 2500, max: 4000, status: 'verde' },
+      { date: '2026-01-27', dayName: 'Lun', value: 4600, min: 3800, max: 5000, status: 'verde' },
+      { date: '2026-01-28', dayName: 'Mar', value: 4200, min: 3800, max: 5000, status: 'verde' },
+      { date: '2026-01-29', dayName: 'Mié', value: 3200, min: 3800, max: 5000, status: 'naranja' },
+    ],
+    sign_up: [
+      { date: '2026-01-23', dayName: 'Jue', value: 380, min: 280, max: 420, status: 'verde' },
+      { date: '2026-01-24', dayName: 'Vie', value: 350, min: 280, max: 420, status: 'verde' },
+      { date: '2026-01-25', dayName: 'Sáb', value: 220, min: 180, max: 300, status: 'verde' },
+      { date: '2026-01-26', dayName: 'Dom', value: 190, min: 180, max: 300, status: 'verde' },
+      { date: '2026-01-27', dayName: 'Lun', value: 320, min: 280, max: 420, status: 'verde' },
+      { date: '2026-01-28', dayName: 'Mar', value: 290, min: 280, max: 420, status: 'verde' },
+      { date: '2026-01-29', dayName: 'Mié', value: 145, min: 280, max: 420, status: 'rojo' },
+    ],
+  };
+
+  return trendsByEvent[eventName] || trendsByEvent.page_view;
+};
