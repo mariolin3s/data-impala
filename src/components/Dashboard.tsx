@@ -5,14 +5,27 @@ import { StatCard } from './StatCard';
 import { AlertCard } from './AlertCard';
 import { EventGrid } from './EventGrid';
 import { DateSelector } from './DateSelector';
+import { AlertFilters } from './AlertFilters';
 import { Activity, CheckCircle2, AlertTriangle, XCircle, Bell } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date('2026-01-29'));
+  const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
+  const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+
+  const filteredAlerts = useMemo(() => {
+    return mockAlerts.filter((alert) => {
+      if (selectedEvent && alert.event !== selectedEvent) return false;
+      if (selectedPlatform && alert.platform !== selectedPlatform) return false;
+      if (selectedStatus && alert.status !== selectedStatus) return false;
+      return true;
+    });
+  }, [selectedEvent, selectedPlatform, selectedStatus]);
 
   const summary = useMemo<AlertSummary>(() => {
-    return mockAlerts.reduce(
+    return filteredAlerts.reduce(
       (acc, alert) => {
         acc.total++;
         if (alert.status === 'verde') acc.success++;
@@ -22,12 +35,19 @@ export function Dashboard() {
       },
       { total: 0, success: 0, warning: 0, critical: 0 }
     );
-  }, []);
+  }, [filteredAlerts]);
 
   const criticalAlerts = useMemo(() => {
-    return mockAlerts.filter((a) => a.status === 'rojo' || a.status === 'naranja')
+    return filteredAlerts
+      .filter((a) => a.status === 'rojo' || a.status === 'naranja')
       .sort((a, b) => (a.status === 'rojo' ? -1 : 1));
-  }, []);
+  }, [filteredAlerts]);
+
+  const clearFilters = () => {
+    setSelectedEvent(null);
+    setSelectedPlatform(null);
+    setSelectedStatus(null);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -44,7 +64,7 @@ export function Dashboard() {
                 <p className="text-sm text-muted-foreground">Monitorización de eventos</p>
               </div>
             </div>
-            
+
             <DateSelector date={selectedDate} onDateChange={setSelectedDate} />
           </div>
         </div>
@@ -52,6 +72,20 @@ export function Dashboard() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* Filters */}
+        <div className="mb-6">
+          <AlertFilters
+            alerts={mockAlerts}
+            selectedEvent={selectedEvent}
+            selectedPlatform={selectedPlatform}
+            selectedStatus={selectedStatus}
+            onEventChange={setSelectedEvent}
+            onPlatformChange={setSelectedPlatform}
+            onStatusChange={setSelectedStatus}
+            onClearFilters={clearFilters}
+          />
+        </div>
+
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard
@@ -103,13 +137,21 @@ export function Dashboard() {
               <div className="text-center py-12 text-muted-foreground">
                 <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-[hsl(var(--status-success))]" />
                 <p className="text-lg font-medium">Todo en orden</p>
-                <p className="text-sm">No hay alertas activas para esta fecha</p>
+                <p className="text-sm">No hay alertas activas para los filtros seleccionados</p>
               </div>
             )}
           </TabsContent>
 
           <TabsContent value="all">
-            <EventGrid alerts={mockAlerts} />
+            {filteredAlerts.length > 0 ? (
+              <EventGrid alerts={filteredAlerts} />
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium">Sin resultados</p>
+                <p className="text-sm">No hay eventos que coincidan con los filtros</p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </main>
