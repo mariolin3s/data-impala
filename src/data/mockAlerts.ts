@@ -233,3 +233,30 @@ export const getEventTrendData = (eventName: string, platform?: string): EventTr
 
   return trendsByEvent[eventName] || trendsByEvent.page_view;
 };
+
+// Historical status distribution for the last 14 days
+export interface DailyStatusData {
+  date: string;
+  dayName: string;
+  verde: number;
+  naranja: number;
+  rojo: number;
+  total: number;
+}
+
+export const dailyStatusHistory: DailyStatusData[] = [
+  { date: '2026-01-16', dayName: '16 Ene', verde: 18, naranja: 3, rojo: 1, total: 22 },
+  { date: '2026-01-17', dayName: '17 Ene', verde: 20, naranja: 2, rojo: 0, total: 22 },
+  { date: '2026-01-18', dayName: '18 Ene', verde: 17, naranja: 4, rojo: 1, total: 22 },
+  { date: '2026-01-19', dayName: '19 Ene', verde: 19, naranja: 2, rojo: 1, total: 22 },
+  { date: '2026-01-20', dayName: '20 Ene', verde: 21, naranja: 1, rojo: 0, total: 22 },
+  { date: '2026-01-21', dayName: '21 Ene', verde: 16, naranja: 4, rojo: 2, total: 22 },
+  { date: '2026-01-22', dayName: '22 Ene', verde: 18, naranja: 3, rojo: 1, total: 22 },
+  { date: '2026-01-23', dayName: '23 Ene', verde: 20, naranja: 2, rojo: 0, total: 22 },
+  { date: '2026-01-24', dayName: '24 Ene', verde: 19, naranja: 2, rojo: 1, total: 22 },
+  { date: '2026-01-25', dayName: '25 Ene', verde: 17, naranja: 3, rojo: 2, total: 22 },
+  { date: '2026-01-26', dayName: '26 Ene', verde: 18, naranja: 3, rojo: 1, total: 22 },
+  { date: '2026-01-27', dayName: '27 Ene', verde: 15, naranja: 5, rojo: 2, total: 22 },
+  { date: '2026-01-28', dayName: '28 Ene', verde: 19, naranja: 2, rojo: 1, total: 22 },
+  { date: '2026-01-29', dayName: '29 Ene', verde: 8, naranja: 3, rojo: 2, total: 13 },
+];
