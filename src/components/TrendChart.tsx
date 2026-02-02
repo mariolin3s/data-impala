@@ -1,14 +1,16 @@
 import { useMemo } from 'react';
 import {
-  AreaChart,
+  ComposedChart,
   Area,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  ReferenceLine,
+  AreaChart,
 } from 'recharts';
+import { AlertTriangle, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { weeklyTrendData, getEventTrendData, TrendDataPoint, EventTrendData } from '@/data/mockAlerts';
 
 interface TrendChartProps {
@@ -21,6 +23,12 @@ const platformColors = {
   ios: 'hsl(142, 71%, 45%)',
   android: 'hsl(32, 95%, 55%)',
   total: 'hsl(280, 65%, 60%)',
+};
+
+const statusColors = {
+  verde: 'hsl(142, 71%, 45%)',
+  naranja: 'hsl(32, 95%, 55%)',
+  rojo: 'hsl(0, 84%, 60%)',
 };
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -49,34 +57,108 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 const EventTrendTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload as EventTrendData;
-    const statusColors = {
-      verde: 'hsl(142, 71%, 45%)',
-      naranja: 'hsl(32, 95%, 55%)',
-      rojo: 'hsl(0, 84%, 60%)',
-    };
+    const StatusIcon = data.status === 'verde' ? CheckCircle2 : 
+                       data.status === 'naranja' ? AlertTriangle : AlertCircle;
 
     return (
-      <div className="bg-card border border-border rounded-lg p-3 shadow-xl">
+      <div className="bg-card border border-border rounded-lg p-3 shadow-xl min-w-[180px]">
         <p className="text-sm font-medium text-foreground mb-2">{label}</p>
-        <div className="space-y-1 text-sm">
+        <div className="space-y-2 text-sm">
           <div className="flex items-center gap-2">
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: statusColors[data.status] }}
+            <StatusIcon 
+              className="w-4 h-4" 
+              style={{ color: statusColors[data.status] }} 
             />
-            <span className="text-muted-foreground">Valor:</span>
+            <span className="text-muted-foreground">Event Count:</span>
             <span className="font-medium text-foreground">
               {data.value.toLocaleString()}
             </span>
           </div>
-          <div className="text-muted-foreground text-xs">
-            Rango: {data.min.toLocaleString()} - {data.max.toLocaleString()}
+          <div className="flex items-center gap-2 text-muted-foreground text-xs">
+            <div className="w-3 h-3 rounded bg-[hsl(142,71%,45%)]/20 border border-[hsl(142,71%,45%)]/40" />
+            <span>Rango esperado: {data.min.toLocaleString()} - {data.max.toLocaleString()}</span>
           </div>
+          {data.status !== 'verde' && (
+            <div className="pt-1 border-t border-border mt-1">
+              <span 
+                className="text-xs font-medium"
+                style={{ color: statusColors[data.status] }}
+              >
+                {data.status === 'naranja' ? '⚠ Desviación moderada' : '🚨 Anomalía crítica'}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     );
   }
   return null;
+};
+
+const CustomDot = (props: any) => {
+  const { cx, cy, payload } = props;
+  
+  if (!cx || !cy) return null;
+  
+  const isAnomaly = payload.status !== 'verde';
+  const color = statusColors[payload.status as keyof typeof statusColors];
+  
+  if (isAnomaly) {
+    // Anomaly indicator - larger with icon-like appearance
+    return (
+      <g>
+        {/* Outer glow */}
+        <circle
+          cx={cx}
+          cy={cy}
+          r={12}
+          fill={color}
+          fillOpacity={0.2}
+        />
+        {/* Middle ring */}
+        <circle
+          cx={cx}
+          cy={cy}
+          r={8}
+          fill={color}
+          fillOpacity={0.4}
+        />
+        {/* Inner dot */}
+        <circle
+          cx={cx}
+          cy={cy}
+          r={5}
+          fill={color}
+          stroke="hsl(222, 47%, 11%)"
+          strokeWidth={2}
+        />
+        {/* Exclamation mark for anomaly */}
+        <text
+          x={cx}
+          y={cy + 1}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill="hsl(222, 47%, 11%)"
+          fontSize={8}
+          fontWeight="bold"
+        >
+          !
+        </text>
+      </g>
+    );
+  }
+  
+  // Normal dot for verde status
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={5}
+      fill={color}
+      stroke="hsl(222, 47%, 11%)"
+      strokeWidth={2}
+    />
+  );
 };
 
 export function TrendChart({ selectedEvent, selectedPlatform }: TrendChartProps) {
@@ -90,9 +172,6 @@ export function TrendChart({ selectedEvent, selectedPlatform }: TrendChartProps)
   }, [selectedEvent, selectedPlatform]);
 
   if (isEventView) {
-    const avgMin = eventData.length > 0 ? eventData[0].min : 0;
-    const avgMax = eventData.length > 0 ? eventData[0].max : 0;
-
     return (
       <div className="bg-card border border-border rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
@@ -100,21 +179,35 @@ export function TrendChart({ selectedEvent, selectedPlatform }: TrendChartProps)
             <h3 className="font-semibold text-foreground">
               Tendencia: {selectedEvent}
             </h3>
-            <p className="text-sm text-muted-foreground">Últimos 7 días</p>
+            <p className="text-sm text-muted-foreground">Últimos 7 días - Event Count vs Rango Esperado</p>
           </div>
           <div className="flex items-center gap-4 text-xs">
             <div className="flex items-center gap-1.5">
-              <div className="w-8 h-0.5 bg-[hsl(var(--status-success))] opacity-50" />
+              <div className="w-8 h-3 rounded bg-[hsl(142,71%,45%)]/20 border border-[hsl(142,71%,45%)]/40" />
               <span className="text-muted-foreground">Rango esperado</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-[hsl(217,91%,60%)]" />
+              <span className="text-muted-foreground">Event count</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-4 h-4 rounded-full bg-[hsl(0,84%,60%)] flex items-center justify-center">
+                <span className="text-[8px] font-bold text-background">!</span>
+              </div>
+              <span className="text-muted-foreground">Anomalía</span>
             </div>
           </div>
         </div>
 
-        <div className="h-[250px]">
+        <div className="h-[280px]">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={eventData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <ComposedChart data={eventData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
               <defs>
-                <linearGradient id="eventGradient" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="expectedRangeGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="hsl(142, 71%, 45%)" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="hsl(142, 71%, 45%)" stopOpacity={0.05} />
+                </linearGradient>
+                <linearGradient id="eventValueGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0.3} />
                   <stop offset="95%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0} />
                 </linearGradient>
@@ -135,47 +228,54 @@ export function TrendChart({ selectedEvent, selectedPlatform }: TrendChartProps)
                 tickFormatter={(value) => value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value}
               />
               <Tooltip content={<EventTrendTooltip />} />
-              <ReferenceLine
-                y={avgMax}
+              
+              {/* Expected range area (min to max) */}
+              <Area
+                type="monotone"
+                dataKey="max"
+                name="Máximo"
                 stroke="hsl(142, 71%, 45%)"
-                strokeDasharray="5 5"
-                strokeOpacity={0.5}
-              />
-              <ReferenceLine
-                y={avgMin}
-                stroke="hsl(142, 71%, 45%)"
-                strokeDasharray="5 5"
-                strokeOpacity={0.5}
+                strokeWidth={1}
+                strokeDasharray="4 4"
+                fill="url(#expectedRangeGradient)"
+                fillOpacity={1}
               />
               <Area
                 type="monotone"
-                dataKey="value"
-                name="Eventos"
-                stroke="hsl(217, 91%, 60%)"
-                strokeWidth={2}
-                fill="url(#eventGradient)"
-                dot={(props: any) => {
-                  const { cx, cy, payload } = props;
-                  const colors = {
-                    verde: 'hsl(142, 71%, 45%)',
-                    naranja: 'hsl(32, 95%, 55%)',
-                    rojo: 'hsl(0, 84%, 60%)',
-                  };
-                  return (
-                    <circle
-                      cx={cx}
-                      cy={cy}
-                      r={5}
-                      fill={colors[payload.status as keyof typeof colors]}
-                      stroke="hsl(222, 47%, 9%)"
-                      strokeWidth={2}
-                    />
-                  );
-                }}
+                dataKey="min"
+                name="Mínimo"
+                stroke="hsl(142, 71%, 45%)"
+                strokeWidth={1}
+                strokeDasharray="4 4"
+                fill="hsl(222, 47%, 11%)"
+                fillOpacity={1}
               />
-            </AreaChart>
+              
+              {/* Event count line */}
+              <Line
+                type="monotone"
+                dataKey="value"
+                name="Event Count"
+                stroke="hsl(217, 91%, 60%)"
+                strokeWidth={3}
+                dot={<CustomDot />}
+                activeDot={{ r: 8, stroke: 'hsl(217, 91%, 60%)', strokeWidth: 2, fill: 'hsl(222, 47%, 11%)' }}
+              />
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
+        
+        {/* Anomaly summary */}
+        {eventData.some(d => d.status !== 'verde') && (
+          <div className="mt-4 pt-4 border-t border-border">
+            <div className="flex items-center gap-2 text-sm">
+              <AlertTriangle className="w-4 h-4 text-[hsl(var(--status-warning))]" />
+              <span className="text-muted-foreground">
+                Anomalías detectadas: {eventData.filter(d => d.status !== 'verde').length} de {eventData.length} días
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
