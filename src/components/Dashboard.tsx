@@ -112,7 +112,7 @@ export function Dashboard() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-foreground">GA4 Alert Monitor</h1>
-                <p className="text-sm text-muted-foreground">Monitorización de eventos</p>
+                <p className="text-sm text-muted-foreground">Monitorización de eventos by Mario Hinojo</p>
               </div>
             </div>
 
