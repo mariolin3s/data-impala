@@ -22,10 +22,15 @@ const statusConfig = {
     icon: XCircle,
     className: 'status-badge-critical',
   },
+  gris: {
+    label: 'Sin datos',
+    icon: CheckCircle2,
+    className: 'status-badge-neutral',
+  },
 };
 
 export function StatusBadge({ status, showLabel = true }: StatusBadgeProps) {
-  const config = statusConfig[status];
+  const config = statusConfig[status] || statusConfig.gris;
   const Icon = config.icon;
 
   return (

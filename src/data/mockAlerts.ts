@@ -185,6 +185,7 @@ export interface EventTrendData {
   date: string;
   dayName: string;
   value: number;
+  mediana?: number;
   min: number;
   max: number;
   status: 'verde' | 'naranja' | 'rojo' | 'gris';

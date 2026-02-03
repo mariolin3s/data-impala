@@ -6,17 +6,32 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { TrendChart } from './TrendChart';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Apple, Smartphone, Monitor } from 'lucide-react';
 
 interface EventGridProps {
   alerts: AlertEvent[];
   originalAlerts: AlertEvent[]; // Added to provide full history to TrendChart
 }
 
-const platformLabels: Record<string, string> = {
-  web: 'Web',
-  ios: 'iOS',
-  android: 'Android',
+const platformConfig: Record<string, { label: string; icon: any; color: string; bgColor: string }> = {
+  web: {
+    label: 'Web',
+    icon: Monitor,
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10 border-blue-500/20'
+  },
+  ios: {
+    label: 'iOS',
+    icon: Apple,
+    color: 'text-slate-400',
+    bgColor: 'bg-slate-500/10 border-slate-500/20'
+  },
+  android: {
+    label: 'Android',
+    icon: Smartphone,
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-500/10 border-emerald-500/20'
+  },
 };
 
 export function EventGrid({ alerts, originalAlerts }: EventGridProps) {
@@ -80,7 +95,12 @@ export function EventGrid({ alerts, originalAlerts }: EventGridProps) {
 
 function EventRow({ alert, allAlerts }: { alert: AlertEvent; allAlerts: AlertEvent[] }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const percentage = ((alert.event_count - alert.mediana) / alert.mediana * 100).toFixed(1);
+  const calculatePercentage = () => {
+    if (!alert.mediana || alert.mediana === 0) return alert.event_count > 0 ? "+100" : "0";
+    return ((alert.event_count - alert.mediana) / alert.mediana * 100).toFixed(1);
+  };
+
+  const percentage = calculatePercentage();
   const isPositive = Number(percentage) >= 0;
 
   return (
@@ -96,13 +116,23 @@ function EventRow({ alert, allAlerts }: { alert: AlertEvent; allAlerts: AlertEve
         <div className="flex items-center gap-4 min-w-0">
           <StatusBadge status={alert.status} showLabel={false} />
           <div className="min-w-0">
-            <p className="font-medium text-foreground truncate">
+            <p className="font-medium text-foreground truncate flex items-center gap-2">
               {alert.event}
-              <span className="ml-2 text-xs font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                {platformLabels[alert.platform] || alert.platform}
-              </span>
+              {platformConfig[alert.platform] && (
+                <span className={cn(
+                  "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border capitalize",
+                  platformConfig[alert.platform].bgColor,
+                  platformConfig[alert.platform].color
+                )}>
+                  {(() => {
+                    const Icon = platformConfig[alert.platform].icon;
+                    return <Icon className="h-3 w-3" />;
+                  })()}
+                  {platformConfig[alert.platform].label}
+                </span>
+              )}
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5 font-medium">
               Mediana: {alert.mediana.toLocaleString()} | Rango: {alert.minimo.toLocaleString()} - {alert.max.toLocaleString()}
             </p>
           </div>
@@ -110,18 +140,21 @@ function EventRow({ alert, allAlerts }: { alert: AlertEvent; allAlerts: AlertEve
 
         <div className="flex items-center gap-6">
           <div className="text-right flex-shrink-0">
-            <p className="font-semibold text-foreground tabular-nums">
+            <p className="font-bold text-base text-foreground tabular-nums">
               {alert.event_count.toLocaleString()}
             </p>
-            <p className={cn(
-              "text-xs font-medium",
-              isPositive ? "text-[hsl(var(--status-success))]" : "text-[hsl(var(--status-critical))]"
-            )}>
-              {isPositive ? '+' : ''}{percentage}%
-            </p>
+            <div className="flex items-center justify-end gap-1.5">
+              <span className={cn(
+                "text-[10px] font-bold px-1.5 py-0.5 rounded",
+                isPositive ? "bg-[hsl(var(--status-success))]/10 text-[hsl(var(--status-success))]" : "bg-[hsl(var(--status-critical))]/10 text-[hsl(var(--status-critical))]"
+              )}>
+                {isPositive ? '+' : ''}{percentage}%
+              </span>
+              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">vs Mediana</span>
+            </div>
           </div>
           <ChevronRight className={cn(
-            "h-4 w-4 text-muted-foreground transition-transform",
+            "h-4 w-4 text-muted-foreground transition-transform shrink-0",
             isExpanded && "rotate-90"
           )} />
         </div>

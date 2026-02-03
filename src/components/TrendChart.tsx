@@ -78,6 +78,10 @@ const EventTrendTooltip = ({ active, payload, label }: any) => {
             </span>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground text-xs">
+            <div className="w-3 h-3 rounded bg-[hsl(215,20%,55%)]/20 border border-[hsl(215,20%,55%)]/40" />
+            <span>Mediana: {data.mediana.toLocaleString()}</span>
+          </div>
+          <div className="flex items-center gap-2 text-muted-foreground text-xs">
             <div className="w-3 h-3 rounded bg-[hsl(142,71%,45%)]/20 border border-[hsl(142,71%,45%)]/40" />
             <span>Rango esperado: {data.min.toLocaleString()} - {data.max.toLocaleString()}</span>
           </div>
@@ -133,6 +137,7 @@ export function TrendChart({ alerts, selectedEvent, selectedPlatform }: TrendCha
         date: a.date,
         dayName: a.date ? a.date.split('-').slice(1).reverse().join('/') : '',
         value: a.event_count || 0,
+        mediana: a.mediana || 0,
         min: a.minimo || 0,
         max: a.max || 0,
         status: a.status || 'gris'
@@ -151,6 +156,10 @@ export function TrendChart({ alerts, selectedEvent, selectedPlatform }: TrendCha
           </h4>
         </div>
         <div className="flex items-center gap-3 text-[10px]">
+          <div className="flex items-center gap-1.5">
+            <div className="w-6 h-0.5 border-t border-dashed border-[hsl(215,20%,55%)]" />
+            <span className="text-muted-foreground whitespace-nowrap">Mediana</span>
+          </div>
           <div className="flex items-center gap-1.5">
             <div className="w-6 h-2 rounded bg-[hsl(142,71%,45%)]/20 border border-[hsl(142,71%,45%)]/40" />
             <span className="text-muted-foreground whitespace-nowrap">Rango esperado</span>
@@ -210,6 +219,16 @@ export function TrendChart({ alerts, selectedEvent, selectedPlatform }: TrendCha
 
             <Line
               type="monotone"
+              dataKey="mediana"
+              stroke="hsl(215, 20%, 55%)"
+              strokeWidth={1.5}
+              strokeDasharray="4 4"
+              dot={false}
+              activeDot={false}
+            />
+
+            <Line
+              type="monotone"
               dataKey="value"
               stroke="hsl(217, 91%, 60%)"
               strokeWidth={2}
@@ -218,6 +237,6 @@ export function TrendChart({ alerts, selectedEvent, selectedPlatform }: TrendCha
           </ComposedChart>
         </ResponsiveContainer>
       </div>
-    </div>
+    </div >
   );
 }
