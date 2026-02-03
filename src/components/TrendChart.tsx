@@ -13,11 +13,14 @@ import {
 import { AlertTriangle, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { EventTrendData, TrendDataPoint } from '@/data/mockAlerts';
 import { AlertEvent } from '@/types/alert';
+import { startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns';
+import { DateRange } from "react-day-picker";
 
 interface TrendChartProps {
   alerts: AlertEvent[];
   selectedEvent?: string | null;
   selectedPlatform?: string | null;
+  dateRange?: DateRange;
 }
 
 const platformColors = {
@@ -126,13 +129,27 @@ const CustomDot = (props: any) => {
   );
 };
 
-export function TrendChart({ alerts, selectedEvent, selectedPlatform }: TrendChartProps) {
+export function TrendChart({ alerts, selectedEvent, selectedPlatform, dateRange }: TrendChartProps) {
   const eventData = useMemo(() => {
     if (!selectedEvent) return [];
 
     const data = alerts || [];
     return data
-      .filter(a => a && a.event === selectedEvent && (!selectedPlatform || a.platform === selectedPlatform))
+      .filter(a => {
+        if (!a || a.event !== selectedEvent) return false;
+        if (selectedPlatform && a.platform !== selectedPlatform) return false;
+
+        // Filter by date range if provided
+        if (dateRange?.from && dateRange?.to) {
+          const alertDate = parseISO(a.date);
+          if (!isWithinInterval(alertDate, {
+            start: startOfDay(dateRange.from),
+            end: endOfDay(dateRange.to)
+          })) return false;
+        }
+
+        return true;
+      })
       .map(a => ({
         date: a.date,
         dayName: a.date ? a.date.split('-').slice(1).reverse().join('/') : '',
@@ -143,7 +160,7 @@ export function TrendChart({ alerts, selectedEvent, selectedPlatform }: TrendCha
         status: a.status || 'gris'
       }))
       .sort((a, b) => a.date.localeCompare(b.date));
-  }, [alerts, selectedEvent, selectedPlatform]);
+  }, [alerts, selectedEvent, selectedPlatform, dateRange]);
 
   if (!selectedEvent) return null;
 

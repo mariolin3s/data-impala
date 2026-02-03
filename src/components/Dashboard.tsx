@@ -15,7 +15,7 @@ import { subDays, isWithinInterval, parseISO, startOfDay, endOfDay } from 'date-
 export function Dashboard() {
   const { alerts, loading, error } = useAlerts();
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: subDays(new Date(), 30),
+    from: subDays(new Date(), 6),
     to: new Date(),
   });
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
@@ -192,6 +192,7 @@ export function Dashboard() {
               <EventGrid
                 alerts={criticalAlerts}
                 originalAlerts={alerts}
+                dateRange={dateRange}
               />
             ) : (
               <div className="text-center py-12 text-muted-foreground">
@@ -207,6 +208,7 @@ export function Dashboard() {
               <EventGrid
                 alerts={filteredAlerts}
                 originalAlerts={alerts}
+                dateRange={dateRange}
               />
             ) : (
               <div className="text-center py-12 text-muted-foreground">

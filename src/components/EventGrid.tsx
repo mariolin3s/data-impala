@@ -8,9 +8,12 @@ import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ChevronRight, Apple, Smartphone, Monitor } from 'lucide-react';
 
+import { DateRange } from "react-day-picker";
+
 interface EventGridProps {
   alerts: AlertEvent[];
   originalAlerts: AlertEvent[]; // Added to provide full history to TrendChart
+  dateRange?: DateRange;
 }
 
 const platformConfig: Record<string, { label: string; icon: any; color: string; bgColor: string }> = {
@@ -34,7 +37,7 @@ const platformConfig: Record<string, { label: string; icon: any; color: string; 
   },
 };
 
-export function EventGrid({ alerts, originalAlerts }: EventGridProps) {
+export function EventGrid({ alerts, originalAlerts, dateRange }: EventGridProps) {
   // Group by date with safety
   const groupedByDate = (alerts || []).reduce<Record<string, AlertEvent[]>>((acc, alert) => {
     if (!alert || !alert.date) return acc;
@@ -82,7 +85,7 @@ export function EventGrid({ alerts, originalAlerts }: EventGridProps) {
             <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
               <div className="divide-y divide-border">
                 {groupedByDate[date].map((alert) => (
-                  <EventRow key={alert.id} alert={alert} allAlerts={originalAlerts} />
+                  <EventRow key={alert.id} alert={alert} allAlerts={originalAlerts} dateRange={dateRange} />
                 ))}
               </div>
             </div>
@@ -93,7 +96,7 @@ export function EventGrid({ alerts, originalAlerts }: EventGridProps) {
   );
 }
 
-function EventRow({ alert, allAlerts }: { alert: AlertEvent; allAlerts: AlertEvent[] }) {
+function EventRow({ alert, allAlerts, dateRange }: { alert: AlertEvent; allAlerts: AlertEvent[]; dateRange?: DateRange }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const calculatePercentage = () => {
     if (!alert.mediana || alert.mediana === 0) return alert.event_count > 0 ? "+100" : "0";
@@ -166,6 +169,7 @@ function EventRow({ alert, allAlerts }: { alert: AlertEvent; allAlerts: AlertEve
             alerts={allAlerts}
             selectedEvent={alert.event}
             selectedPlatform={alert.platform}
+            dateRange={dateRange}
           />
           <div className="mt-3 bg-muted/20 border border-border/50 rounded-lg p-3 text-sm">
             <p className="text-muted-foreground leading-relaxed italic">
