@@ -170,6 +170,7 @@ function EventRow({ alert, allAlerts, dateRange }: { alert: AlertEvent; allAlert
             selectedEvent={alert.event}
             selectedPlatform={alert.platform}
             dateRange={dateRange}
+            selectedDate={alert.date}
           />
           <div className="mt-3 bg-muted/20 border border-border/50 rounded-lg p-3 text-sm">
             <p className="text-muted-foreground leading-relaxed italic">

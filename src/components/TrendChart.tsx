@@ -21,6 +21,7 @@ interface TrendChartProps {
   selectedEvent?: string | null;
   selectedPlatform?: string | null;
   dateRange?: DateRange;
+  selectedDate?: string; // Date of the alert being viewed
 }
 
 const platformColors = {
@@ -106,16 +107,25 @@ const EventTrendTooltip = ({ active, payload, label }: any) => {
 };
 
 const CustomDot = (props: any) => {
-  const { cx, cy, payload } = props;
+  const { cx, cy, payload, selectedDate } = props;
 
   if (!cx || !cy) return null;
 
   const isAnomaly = payload.status !== 'verde' && payload.status !== 'gris';
+  const isSelected = selectedDate && payload.date === selectedDate;
   const color = statusColors[payload.status as keyof typeof statusColors] || statusColors.verde;
 
   if (isAnomaly) {
     return (
       <g>
+        {isSelected && (
+          <>
+            <circle cx={cx} cy={cy} r={18} fill={color} fillOpacity={0.3}>
+              <animate attributeName="r" values="18;22;18" dur="1.5s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.3;0.1;0.3" dur="1.5s" repeatCount="indefinite" />
+            </circle>
+          </>
+        )}
         <circle cx={cx} cy={cy} r={12} fill={color} fillOpacity={0.2} />
         <circle cx={cx} cy={cy} r={8} fill={color} fillOpacity={0.4} />
         <circle cx={cx} cy={cy} r={5} fill={color} stroke="hsl(222, 47%, 11%)" strokeWidth={2} />
@@ -125,11 +135,19 @@ const CustomDot = (props: any) => {
   }
 
   return (
-    <circle cx={cx} cy={cy} r={5} fill={color} stroke="hsl(222, 47%, 11%)" strokeWidth={2} />
+    <g>
+      {isSelected && (
+        <circle cx={cx} cy={cy} r={12} fill={color} fillOpacity={0.4}>
+          <animate attributeName="r" values="12;16;12" dur="1.5s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.4;0.1;0.4" dur="1.5s" repeatCount="indefinite" />
+        </circle>
+      )}
+      <circle cx={cx} cy={cy} r={5} fill={color} stroke="hsl(222, 47%, 11%)" strokeWidth={2} />
+    </g>
   );
 };
 
-export function TrendChart({ alerts, selectedEvent, selectedPlatform, dateRange }: TrendChartProps) {
+export function TrendChart({ alerts, selectedEvent, selectedPlatform, dateRange, selectedDate }: TrendChartProps) {
   const eventData = useMemo(() => {
     if (!selectedEvent) return [];
 
@@ -249,7 +267,7 @@ export function TrendChart({ alerts, selectedEvent, selectedPlatform, dateRange 
               dataKey="value"
               stroke="hsl(217, 91%, 60%)"
               strokeWidth={2}
-              dot={<CustomDot />}
+              dot={<CustomDot selectedDate={selectedDate} />}
             />
           </ComposedChart>
         </ResponsiveContainer>
