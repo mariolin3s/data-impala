@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
-import { mockAlerts } from '@/data/mockAlerts';
-import { AlertSummary } from '@/types/alert';
+import { useState, useMemo, useEffect } from 'react';
+import { useAlerts } from '@/hooks/useAlerts';
+import { AlertSummary, AlertEvent } from '@/types/alert';
 import { StatCard } from './StatCard';
 import { AlertCard } from './AlertCard';
 import { EventGrid } from './EventGrid';
@@ -8,23 +8,34 @@ import { DateSelector } from './DateSelector';
 import { AlertFilters } from './AlertFilters';
 import { TrendChart } from './TrendChart';
 import { StatusHistoryChart } from './StatusHistoryChart';
-import { Activity, CheckCircle2, AlertTriangle, XCircle, Bell } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Activity, CheckCircle2, AlertTriangle, XCircle, Bell } from 'lucide-react';
 
 export function Dashboard() {
-  const [selectedDate, setSelectedDate] = useState(new Date('2026-01-29'));
+  const { alerts, loading, error } = useAlerts();
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
+  // Set initial date to the latest date in the dataset
+  useEffect(() => {
+    if (alerts.length > 0) {
+      const dates = alerts.map(a => new Date(a.date).getTime());
+      setSelectedDate(new Date(Math.max(...dates)));
+    }
+  }, [alerts]);
+
   const filteredAlerts = useMemo(() => {
-    return mockAlerts.filter((alert) => {
+    const dateStr = selectedDate.toISOString().split('T')[0];
+    return alerts.filter((alert) => {
+      if (alert.date !== dateStr) return false;
       if (selectedEvent && alert.event !== selectedEvent) return false;
       if (selectedPlatform && alert.platform !== selectedPlatform) return false;
       if (selectedStatus && alert.status !== selectedStatus) return false;
       return true;
     });
-  }, [selectedEvent, selectedPlatform, selectedStatus]);
+  }, [alerts, selectedDate, selectedEvent, selectedPlatform, selectedStatus]);
 
   const summary = useMemo<AlertSummary>(() => {
     return filteredAlerts.reduce(
@@ -51,6 +62,26 @@ export function Dashboard() {
     setSelectedStatus(null);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Activity className="h-8 w-8 text-primary animate-spin" />
+        <span className="ml-3 text-lg font-medium">Cargando datos...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="bg-destructive/10 p-6 rounded-lg text-destructive flex flex-col items-center gap-3">
+          <XCircle className="h-8 w-8" />
+          <p className="font-bold">Error al cargar los datos de alertas</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -67,7 +98,9 @@ export function Dashboard() {
               </div>
             </div>
 
-            <DateSelector date={selectedDate} onDateChange={setSelectedDate} />
+            <div className="flex items-center gap-4">
+              <DateSelector date={selectedDate} onDateChange={setSelectedDate} />
+            </div>
           </div>
         </div>
       </header>
@@ -77,7 +110,7 @@ export function Dashboard() {
         {/* Filters */}
         <div className="mb-6">
           <AlertFilters
-            alerts={mockAlerts}
+            alerts={alerts}
             selectedEvent={selectedEvent}
             selectedPlatform={selectedPlatform}
             selectedStatus={selectedStatus}
@@ -117,14 +150,15 @@ export function Dashboard() {
 
         {/* Status History Chart */}
         <div className="mb-8">
-          <StatusHistoryChart />
+          <StatusHistoryChart alerts={alerts} />
         </div>
 
         {/* Trend Chart */}
         <div className="mb-8">
-          <TrendChart 
-            selectedEvent={selectedEvent} 
-            selectedPlatform={selectedPlatform} 
+          <TrendChart
+            alerts={alerts}
+            selectedEvent={selectedEvent}
+            selectedPlatform={selectedPlatform}
           />
         </div>
 

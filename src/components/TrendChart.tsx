@@ -11,9 +11,11 @@ import {
   AreaChart,
 } from 'recharts';
 import { AlertTriangle, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { weeklyTrendData, getEventTrendData, TrendDataPoint, EventTrendData } from '@/data/mockAlerts';
+import { EventTrendData, TrendDataPoint } from '@/data/mockAlerts';
+import { AlertEvent } from '@/types/alert';
 
 interface TrendChartProps {
+  alerts: AlertEvent[];
   selectedEvent?: string | null;
   selectedPlatform?: string | null;
 }
@@ -29,17 +31,18 @@ const statusColors = {
   verde: 'hsl(142, 71%, 45%)',
   naranja: 'hsl(32, 95%, 55%)',
   rojo: 'hsl(0, 84%, 60%)',
+  gris: 'hsl(215, 20%, 55%)',
 };
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-card border border-border rounded-lg p-3 shadow-xl">
-        <p className="text-sm font-medium text-foreground mb-2">{label}</p>
+      <div className="bg-card border border-border rounded-lg p-3 shadow-xl text-xs">
+        <p className="font-medium text-foreground mb-2">{label}</p>
         {payload.map((entry: any, index: number) => (
-          <div key={index} className="flex items-center gap-2 text-sm">
+          <div key={index} className="flex items-center gap-2 mb-1">
             <div
-              className="w-3 h-3 rounded-full"
+              className="w-2.5 h-2.5 rounded-full"
               style={{ backgroundColor: entry.color }}
             />
             <span className="text-muted-foreground">{entry.name}:</span>
@@ -57,17 +60,17 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 const EventTrendTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload as EventTrendData;
-    const StatusIcon = data.status === 'verde' ? CheckCircle2 : 
-                       data.status === 'naranja' ? AlertTriangle : AlertCircle;
+    const StatusIcon = data.status === 'verde' ? CheckCircle2 :
+      data.status === 'naranja' ? AlertTriangle : AlertCircle;
 
     return (
       <div className="bg-card border border-border rounded-lg p-3 shadow-xl min-w-[180px]">
         <p className="text-sm font-medium text-foreground mb-2">{label}</p>
         <div className="space-y-2 text-sm">
           <div className="flex items-center gap-2">
-            <StatusIcon 
-              className="w-4 h-4" 
-              style={{ color: statusColors[data.status] }} 
+            <StatusIcon
+              className="w-4 h-4"
+              style={{ color: statusColors[data.status as keyof typeof statusColors] }}
             />
             <span className="text-muted-foreground">Event Count:</span>
             <span className="font-medium text-foreground">
@@ -78,11 +81,11 @@ const EventTrendTooltip = ({ active, payload, label }: any) => {
             <div className="w-3 h-3 rounded bg-[hsl(142,71%,45%)]/20 border border-[hsl(142,71%,45%)]/40" />
             <span>Rango esperado: {data.min.toLocaleString()} - {data.max.toLocaleString()}</span>
           </div>
-          {data.status !== 'verde' && (
+          {data.status !== 'verde' && data.status !== 'gris' && (
             <div className="pt-1 border-t border-border mt-1">
-              <span 
+              <span
                 className="text-xs font-medium"
-                style={{ color: statusColors[data.status] }}
+                style={{ color: statusColors[data.status as keyof typeof statusColors] }}
               >
                 {data.status === 'naranja' ? '⚠ Desviación moderada' : '🚨 Anomalía crítica'}
               </span>
@@ -97,79 +100,73 @@ const EventTrendTooltip = ({ active, payload, label }: any) => {
 
 const CustomDot = (props: any) => {
   const { cx, cy, payload } = props;
-  
+
   if (!cx || !cy) return null;
-  
-  const isAnomaly = payload.status !== 'verde';
-  const color = statusColors[payload.status as keyof typeof statusColors];
-  
+
+  const isAnomaly = payload.status !== 'verde' && payload.status !== 'gris';
+  const color = statusColors[payload.status as keyof typeof statusColors] || statusColors.verde;
+
   if (isAnomaly) {
-    // Anomaly indicator - larger with icon-like appearance
     return (
       <g>
-        {/* Outer glow */}
-        <circle
-          cx={cx}
-          cy={cy}
-          r={12}
-          fill={color}
-          fillOpacity={0.2}
-        />
-        {/* Middle ring */}
-        <circle
-          cx={cx}
-          cy={cy}
-          r={8}
-          fill={color}
-          fillOpacity={0.4}
-        />
-        {/* Inner dot */}
-        <circle
-          cx={cx}
-          cy={cy}
-          r={5}
-          fill={color}
-          stroke="hsl(222, 47%, 11%)"
-          strokeWidth={2}
-        />
-        {/* Exclamation mark for anomaly */}
-        <text
-          x={cx}
-          y={cy + 1}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fill="hsl(222, 47%, 11%)"
-          fontSize={8}
-          fontWeight="bold"
-        >
-          !
-        </text>
+        <circle cx={cx} cy={cy} r={12} fill={color} fillOpacity={0.2} />
+        <circle cx={cx} cy={cy} r={8} fill={color} fillOpacity={0.4} />
+        <circle cx={cx} cy={cy} r={5} fill={color} stroke="hsl(222, 47%, 11%)" strokeWidth={2} />
+        <text x={cx} y={cy + 1} textAnchor="middle" dominantBaseline="middle" fill="hsl(222, 47%, 11%)" fontSize={8} fontWeight="bold">!</text>
       </g>
     );
   }
-  
-  // Normal dot for verde status
+
   return (
-    <circle
-      cx={cx}
-      cy={cy}
-      r={5}
-      fill={color}
-      stroke="hsl(222, 47%, 11%)"
-      strokeWidth={2}
-    />
+    <circle cx={cx} cy={cy} r={5} fill={color} stroke="hsl(222, 47%, 11%)" strokeWidth={2} />
   );
 };
 
-export function TrendChart({ selectedEvent, selectedPlatform }: TrendChartProps) {
+export function TrendChart({ alerts, selectedEvent, selectedPlatform }: TrendChartProps) {
   const isEventView = !!selectedEvent;
 
+  const weeklyTrendData = useMemo(() => {
+    const groupedByDate: Record<string, TrendDataPoint> = {};
+
+    alerts.forEach(alert => {
+      if (!groupedByDate[alert.date]) {
+        groupedByDate[alert.date] = {
+          date: alert.date,
+          dayName: alert.date.split('-').slice(1).reverse().join('/'),
+          web: 0,
+          ios: 0,
+          android: 0,
+          total: 0
+        };
+      }
+      const platform = alert.platform as 'web' | 'ios' | 'android';
+      if (groupedByDate[alert.date][platform] !== undefined) {
+        groupedByDate[alert.date][platform] += alert.event_count;
+      }
+      groupedByDate[alert.date].total += alert.event_count;
+    });
+
+    return Object.values(groupedByDate)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(-7);
+  }, [alerts]);
+
   const eventData = useMemo(() => {
-    if (selectedEvent) {
-      return getEventTrendData(selectedEvent, selectedPlatform || undefined);
-    }
-    return [];
-  }, [selectedEvent, selectedPlatform]);
+    if (!selectedEvent) return [];
+
+    return alerts
+      .filter(a => a.event === selectedEvent && (!selectedPlatform || a.platform === selectedPlatform))
+      .map(a => ({
+        date: a.date,
+        dayName: a.date.split('-').slice(1).reverse().join('/'),
+        value: a.event_count,
+        min: a.minimo,
+        max: a.max,
+        status: a.status
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(-7);
+  }, [alerts, selectedEvent, selectedPlatform]);
 
   if (isEventView) {
     return (
@@ -228,7 +225,7 @@ export function TrendChart({ selectedEvent, selectedPlatform }: TrendChartProps)
                 tickFormatter={(value) => value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value}
               />
               <Tooltip content={<EventTrendTooltip />} />
-              
+
               {/* Expected range area (min to max) */}
               <Area
                 type="monotone"
@@ -250,7 +247,7 @@ export function TrendChart({ selectedEvent, selectedPlatform }: TrendChartProps)
                 fill="hsl(222, 47%, 11%)"
                 fillOpacity={1}
               />
-              
+
               {/* Event count line */}
               <Line
                 type="monotone"
@@ -264,7 +261,7 @@ export function TrendChart({ selectedEvent, selectedPlatform }: TrendChartProps)
             </ComposedChart>
           </ResponsiveContainer>
         </div>
-        
+
         {/* Anomaly summary */}
         {eventData.some(d => d.status !== 'verde') && (
           <div className="mt-4 pt-4 border-t border-border">

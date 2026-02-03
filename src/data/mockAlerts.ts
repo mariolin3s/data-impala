@@ -187,7 +187,7 @@ export interface EventTrendData {
   value: number;
   min: number;
   max: number;
-  status: 'verde' | 'naranja' | 'rojo';
+  status: 'verde' | 'naranja' | 'rojo' | 'gris';
 }
 
 export const getEventTrendData = (eventName: string, platform?: string): EventTrendData[] => {
