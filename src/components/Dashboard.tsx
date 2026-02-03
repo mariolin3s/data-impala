@@ -24,26 +24,45 @@ export function Dashboard() {
 
   // Set initial date range if needed (latest data-centric range)
   useEffect(() => {
-    if (alerts.length > 0 && !dateRange?.from) {
+    if (alerts.length > 0) {
       const dates = alerts.map(a => new Date(a.date).getTime());
+      const minDate = new Date(Math.min(...dates));
       const maxDate = new Date(Math.max(...dates));
-      setDateRange({
-        from: subDays(maxDate, 6), // 7 days inclusive: current max - 6
-        to: maxDate
+
+      console.log('📊 Alert date range in data:', {
+        earliest: minDate.toISOString(),
+        latest: maxDate.toISOString(),
+        totalAlerts: alerts.length
       });
     }
   }, [alerts]);
 
   const filteredAlerts = useMemo(() => {
     const data = alerts || [];
-    return data.filter((alert) => {
+
+    // Debug logging
+    console.log('🔍 Filtering alerts:', {
+      totalAlerts: data.length,
+      dateRange: dateRange ? {
+        from: dateRange.from?.toISOString(),
+        to: dateRange.to?.toISOString()
+      } : null,
+      sampleDates: data.slice(0, 5).map(a => a.date)
+    });
+
+    const filtered = data.filter((alert) => {
       if (!alert) return false;
       if (dateRange?.from && dateRange?.to) {
         const alertDate = parseISO(alert.date);
-        if (!isWithinInterval(alertDate, {
-          start: startOfDay(dateRange.from),
-          end: endOfDay(dateRange.to)
-        })) return false;
+        const rangeStart = startOfDay(dateRange.from);
+        const rangeEnd = endOfDay(dateRange.to);
+
+        const isInRange = isWithinInterval(alertDate, {
+          start: rangeStart,
+          end: rangeEnd
+        });
+
+        if (!isInRange) return false;
       } else if (dateRange?.from) {
         if (alert.date !== dateRange.from.toISOString().split('T')[0]) return false;
       }
@@ -53,6 +72,9 @@ export function Dashboard() {
       if (selectedStatus && alert.status !== selectedStatus) return false;
       return true;
     });
+
+    console.log('✅ Filtered results:', filtered.length);
+    return filtered;
   }, [alerts, dateRange, selectedEvent, selectedPlatform, selectedStatus]);
 
   const summary = useMemo<AlertSummary>(() => {
