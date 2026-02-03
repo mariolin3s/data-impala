@@ -10,32 +10,49 @@ import { TrendChart } from './TrendChart';
 import { StatusHistoryChart } from './StatusHistoryChart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Activity, CheckCircle2, AlertTriangle, XCircle, Bell } from 'lucide-react';
+import { DateRange } from "react-day-picker";
+import { subDays, isWithinInterval, parseISO, startOfDay, endOfDay } from 'date-fns';
 
 export function Dashboard() {
   const { alerts, loading, error } = useAlerts();
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 30),
+    to: new Date(),
+  });
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
-  // Set initial date to the latest date in the dataset
+  // Set initial date range if needed (latest data-centric range)
   useEffect(() => {
-    if (alerts.length > 0) {
+    if (alerts.length > 0 && !dateRange?.from) {
       const dates = alerts.map(a => new Date(a.date).getTime());
-      setSelectedDate(new Date(Math.max(...dates)));
+      const maxDate = new Date(Math.max(...dates));
+      setDateRange({
+        from: subDays(maxDate, 6), // 7 days inclusive: current max - 6
+        to: maxDate
+      });
     }
   }, [alerts]);
 
   const filteredAlerts = useMemo(() => {
-    const dateStr = selectedDate.toISOString().split('T')[0];
     return alerts.filter((alert) => {
-      if (alert.date !== dateStr) return false;
+      if (dateRange?.from && dateRange?.to) {
+        const alertDate = parseISO(alert.date);
+        if (!isWithinInterval(alertDate, {
+          start: startOfDay(dateRange.from),
+          end: endOfDay(dateRange.to)
+        })) return false;
+      } else if (dateRange?.from) {
+        if (alert.date !== dateRange.from.toISOString().split('T')[0]) return false;
+      }
+
       if (selectedEvent && alert.event !== selectedEvent) return false;
       if (selectedPlatform && alert.platform !== selectedPlatform) return false;
       if (selectedStatus && alert.status !== selectedStatus) return false;
       return true;
     });
-  }, [alerts, selectedDate, selectedEvent, selectedPlatform, selectedStatus]);
+  }, [alerts, dateRange, selectedEvent, selectedPlatform, selectedStatus]);
 
   const summary = useMemo<AlertSummary>(() => {
     return filteredAlerts.reduce(
@@ -99,7 +116,7 @@ export function Dashboard() {
             </div>
 
             <div className="flex items-center gap-4">
-              <DateSelector date={selectedDate} onDateChange={setSelectedDate} />
+              <DateSelector range={dateRange} onRangeChange={setDateRange} />
             </div>
           </div>
         </div>
@@ -111,6 +128,7 @@ export function Dashboard() {
         <div className="mb-6">
           <AlertFilters
             alerts={alerts}
+            dateRange={dateRange}
             selectedEvent={selectedEvent}
             selectedPlatform={selectedPlatform}
             selectedStatus={selectedStatus}
@@ -150,17 +168,10 @@ export function Dashboard() {
 
         {/* Status History Chart */}
         <div className="mb-8">
-          <StatusHistoryChart alerts={alerts} />
+          <StatusHistoryChart alerts={filteredAlerts} />
         </div>
 
-        {/* Trend Chart */}
-        <div className="mb-8">
-          <TrendChart
-            alerts={alerts}
-            selectedEvent={selectedEvent}
-            selectedPlatform={selectedPlatform}
-          />
-        </div>
+        {/* Trend Chart removed from main layout */}
 
         {/* Tabs */}
         <Tabs defaultValue="alerts" className="space-y-6">
@@ -193,7 +204,10 @@ export function Dashboard() {
 
           <TabsContent value="all">
             {filteredAlerts.length > 0 ? (
-              <EventGrid alerts={filteredAlerts} />
+              <EventGrid
+                alerts={filteredAlerts}
+                originalAlerts={alerts}
+              />
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />

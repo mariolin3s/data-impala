@@ -112,8 +112,7 @@ export function StatusHistoryChart({ alerts }: StatusHistoryChartProps) {
         dayName: date.split('-').slice(1).reverse().join('/'), // Format as DD/MM
         ...counts,
       }))
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .slice(-14); // Keep last 14 days
+      .sort((a, b) => a.date.localeCompare(b.date));
   }, [alerts]);
 
   return (

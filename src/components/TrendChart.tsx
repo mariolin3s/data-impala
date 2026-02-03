@@ -123,34 +123,6 @@ const CustomDot = (props: any) => {
 };
 
 export function TrendChart({ alerts, selectedEvent, selectedPlatform }: TrendChartProps) {
-  const isEventView = !!selectedEvent;
-
-  const weeklyTrendData = useMemo(() => {
-    const groupedByDate: Record<string, TrendDataPoint> = {};
-
-    alerts.forEach(alert => {
-      if (!groupedByDate[alert.date]) {
-        groupedByDate[alert.date] = {
-          date: alert.date,
-          dayName: alert.date.split('-').slice(1).reverse().join('/'),
-          web: 0,
-          ios: 0,
-          android: 0,
-          total: 0
-        };
-      }
-      const platform = alert.platform as 'web' | 'ios' | 'android';
-      if (groupedByDate[alert.date][platform] !== undefined) {
-        groupedByDate[alert.date][platform] += alert.event_count;
-      }
-      groupedByDate[alert.date].total += alert.event_count;
-    });
-
-    return Object.values(groupedByDate)
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .slice(-7);
-  }, [alerts]);
-
   const eventData = useMemo(() => {
     if (!selectedEvent) return [];
 
@@ -164,201 +136,85 @@ export function TrendChart({ alerts, selectedEvent, selectedPlatform }: TrendCha
         max: a.max,
         status: a.status
       }))
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .slice(-7);
+      .sort((a, b) => a.date.localeCompare(b.date));
   }, [alerts, selectedEvent, selectedPlatform]);
 
-  if (isEventView) {
-    return (
-      <div className="bg-card border border-border rounded-xl p-5">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="font-semibold text-foreground">
-              Tendencia: {selectedEvent}
-            </h3>
-            <p className="text-sm text-muted-foreground">Últimos 7 días - Event Count vs Rango Esperado</p>
-          </div>
-          <div className="flex items-center gap-4 text-xs">
-            <div className="flex items-center gap-1.5">
-              <div className="w-8 h-3 rounded bg-[hsl(142,71%,45%)]/20 border border-[hsl(142,71%,45%)]/40" />
-              <span className="text-muted-foreground">Rango esperado</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-[hsl(217,91%,60%)]" />
-              <span className="text-muted-foreground">Event count</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded-full bg-[hsl(0,84%,60%)] flex items-center justify-center">
-                <span className="text-[8px] font-bold text-background">!</span>
-              </div>
-              <span className="text-muted-foreground">Anomalía</span>
-            </div>
-          </div>
-        </div>
+  if (!selectedEvent) return null;
 
-        <div className="h-[280px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={eventData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="expectedRangeGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(142, 71%, 45%)" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="hsl(142, 71%, 45%)" stopOpacity={0.05} />
-                </linearGradient>
-                <linearGradient id="eventValueGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(217, 33%, 17%)" />
-              <XAxis
-                dataKey="dayName"
-                stroke="hsl(215, 20%, 55%)"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                stroke="hsl(215, 20%, 55%)"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value) => value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value}
-              />
-              <Tooltip content={<EventTrendTooltip />} />
-
-              {/* Expected range area (min to max) */}
-              <Area
-                type="monotone"
-                dataKey="max"
-                name="Máximo"
-                stroke="hsl(142, 71%, 45%)"
-                strokeWidth={1}
-                strokeDasharray="4 4"
-                fill="url(#expectedRangeGradient)"
-                fillOpacity={1}
-              />
-              <Area
-                type="monotone"
-                dataKey="min"
-                name="Mínimo"
-                stroke="hsl(142, 71%, 45%)"
-                strokeWidth={1}
-                strokeDasharray="4 4"
-                fill="hsl(222, 47%, 11%)"
-                fillOpacity={1}
-              />
-
-              {/* Event count line */}
-              <Line
-                type="monotone"
-                dataKey="value"
-                name="Event Count"
-                stroke="hsl(217, 91%, 60%)"
-                strokeWidth={3}
-                dot={<CustomDot />}
-                activeDot={{ r: 8, stroke: 'hsl(217, 91%, 60%)', strokeWidth: 2, fill: 'hsl(222, 47%, 11%)' }}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Anomaly summary */}
-        {eventData.some(d => d.status !== 'verde') && (
-          <div className="mt-4 pt-4 border-t border-border">
-            <div className="flex items-center gap-2 text-sm">
-              <AlertTriangle className="w-4 h-4 text-[hsl(var(--status-warning))]" />
-              <span className="text-muted-foreground">
-                Anomalías detectadas: {eventData.filter(d => d.status !== 'verde').length} de {eventData.length} días
-              </span>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // Default: Platform comparison chart
   return (
-    <div className="bg-card border border-border rounded-xl p-5">
+    <div className="bg-card/30 rounded-xl p-4 mt-2">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="font-semibold text-foreground">Tendencia por plataforma</h3>
-          <p className="text-sm text-muted-foreground">Eventos totales - Últimos 7 días</p>
+          <h4 className="text-sm font-semibold text-foreground">
+            Tendencia de {selectedEvent}
+          </h4>
         </div>
-        <div className="flex items-center gap-4 text-xs">
+        <div className="flex items-center gap-3 text-[10px]">
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: platformColors.web }} />
-            <span className="text-muted-foreground">Web</span>
+            <div className="w-6 h-2 rounded bg-[hsl(142,71%,45%)]/20 border border-[hsl(142,71%,45%)]/40" />
+            <span className="text-muted-foreground whitespace-nowrap">Rango esperado</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: platformColors.ios }} />
-            <span className="text-muted-foreground">iOS</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: platformColors.android }} />
-            <span className="text-muted-foreground">Android</span>
+            <div className="w-2 h-2 rounded-full bg-[hsl(217,91%,60%)]" />
+            <span className="text-muted-foreground whitespace-nowrap">Event count</span>
           </div>
         </div>
       </div>
 
-      <div className="h-[250px]">
+      <div className="h-[200px]">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={weeklyTrendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <ComposedChart data={eventData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
-              <linearGradient id="webGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={platformColors.web} stopOpacity={0.3} />
-                <stop offset="95%" stopColor={platformColors.web} stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="iosGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={platformColors.ios} stopOpacity={0.3} />
-                <stop offset="95%" stopColor={platformColors.ios} stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="androidGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={platformColors.android} stopOpacity={0.3} />
-                <stop offset="95%" stopColor={platformColors.android} stopOpacity={0} />
+              <linearGradient id="expectedRangeGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="hsl(142, 71%, 45%)" stopOpacity={0.15} />
+                <stop offset="95%" stopColor="hsl(142, 71%, 45%)" stopOpacity={0.02} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(217, 33%, 17%)" />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(217, 33%, 17%)" vertical={false} />
             <XAxis
               dataKey="dayName"
               stroke="hsl(215, 20%, 55%)"
-              fontSize={12}
+              fontSize={10}
               tickLine={false}
               axisLine={false}
+              interval="preserveStartEnd"
             />
             <YAxis
               stroke="hsl(215, 20%, 55%)"
-              fontSize={12}
+              fontSize={10}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+              tickFormatter={(value) => value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<EventTrendTooltip />} />
+
             <Area
               type="monotone"
-              dataKey="web"
-              name="Web"
-              stroke={platformColors.web}
-              strokeWidth={2}
-              fill="url(#webGradient)"
-            />
-            <Area
-              type="monotone"
-              dataKey="ios"
-              name="iOS"
-              stroke={platformColors.ios}
-              strokeWidth={2}
-              fill="url(#iosGradient)"
+              dataKey="max"
+              stroke="hsl(142, 71%, 45%)"
+              strokeWidth={1}
+              strokeDasharray="4 4"
+              fill="url(#expectedRangeGradient)"
+              fillOpacity={1}
             />
             <Area
               type="monotone"
-              dataKey="android"
-              name="Android"
-              stroke={platformColors.android}
-              strokeWidth={2}
-              fill="url(#androidGradient)"
+              dataKey="min"
+              stroke="hsl(142, 71%, 45%)"
+              strokeWidth={1}
+              strokeDasharray="4 4"
+              fill="hsl(222, 47%, 11%)"
+              fillOpacity={1}
             />
-          </AreaChart>
+
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke="hsl(217, 91%, 60%)"
+              strokeWidth={2}
+              dot={<CustomDot />}
+            />
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
     </div>

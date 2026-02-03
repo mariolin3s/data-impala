@@ -9,8 +9,12 @@ import {
 } from '@/components/ui/select';
 import { X, Filter } from 'lucide-react';
 
+import { DateRange } from "react-day-picker";
+import { isWithinInterval, parseISO, startOfDay, endOfDay } from 'date-fns';
+
 interface AlertFiltersProps {
   alerts: AlertEvent[];
+  dateRange: DateRange | undefined;
   selectedEvent: string | null;
   selectedPlatform: string | null;
   selectedStatus: string | null;
@@ -34,6 +38,7 @@ const statusLabels: Record<string, string> = {
 
 export function AlertFilters({
   alerts,
+  dateRange,
   selectedEvent,
   selectedPlatform,
   selectedStatus,
@@ -42,8 +47,18 @@ export function AlertFilters({
   onStatusChange,
   onClearFilters,
 }: AlertFiltersProps) {
-  const uniqueEvents = [...new Set(alerts.map((a) => a.event))].sort();
-  const uniquePlatforms = [...new Set(alerts.map((a) => a.platform))].sort();
+  const rangeAlerts = alerts.filter((alert) => {
+    if (dateRange?.from && dateRange?.to) {
+      return isWithinInterval(parseISO(alert.date), {
+        start: startOfDay(dateRange.from),
+        end: endOfDay(dateRange.to),
+      });
+    }
+    return true;
+  });
+
+  const uniqueEvents = [...new Set(rangeAlerts.map((a) => a.event))].sort();
+  const uniquePlatforms = [...new Set(rangeAlerts.map((a) => a.platform))].sort();
 
   const hasActiveFilters = selectedEvent || selectedPlatform || selectedStatus;
 
