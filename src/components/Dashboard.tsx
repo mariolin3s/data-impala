@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from 'react';
 import { useAlerts } from '@/hooks/useAlerts';
 import { AlertSummary, AlertEvent } from '@/types/alert';
 import { StatCard } from './StatCard';
-import { AlertCard } from './AlertCard';
 import { EventGrid } from './EventGrid';
 import { DateSelector } from './DateSelector';
 import { AlertFilters } from './AlertFilters';
@@ -36,7 +35,9 @@ export function Dashboard() {
   }, [alerts]);
 
   const filteredAlerts = useMemo(() => {
-    return alerts.filter((alert) => {
+    const data = alerts || [];
+    return data.filter((alert) => {
+      if (!alert) return false;
       if (dateRange?.from && dateRange?.to) {
         const alertDate = parseISO(alert.date);
         if (!isWithinInterval(alertDate, {
@@ -188,11 +189,10 @@ export function Dashboard() {
 
           <TabsContent value="alerts" className="space-y-4">
             {criticalAlerts.length > 0 ? (
-              <div className="space-y-3">
-                {criticalAlerts.map((alert) => (
-                  <AlertCard key={alert.id} alert={alert} />
-                ))}
-              </div>
+              <EventGrid
+                alerts={criticalAlerts}
+                originalAlerts={alerts}
+              />
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-[hsl(var(--status-success))]" />

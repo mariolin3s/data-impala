@@ -126,15 +126,16 @@ export function TrendChart({ alerts, selectedEvent, selectedPlatform }: TrendCha
   const eventData = useMemo(() => {
     if (!selectedEvent) return [];
 
-    return alerts
-      .filter(a => a.event === selectedEvent && (!selectedPlatform || a.platform === selectedPlatform))
+    const data = alerts || [];
+    return data
+      .filter(a => a && a.event === selectedEvent && (!selectedPlatform || a.platform === selectedPlatform))
       .map(a => ({
         date: a.date,
-        dayName: a.date.split('-').slice(1).reverse().join('/'),
-        value: a.event_count,
-        min: a.minimo,
-        max: a.max,
-        status: a.status
+        dayName: a.date ? a.date.split('-').slice(1).reverse().join('/') : '',
+        value: a.event_count || 0,
+        min: a.minimo || 0,
+        max: a.max || 0,
+        status: a.status || 'gris'
       }))
       .sort((a, b) => a.date.localeCompare(b.date));
   }, [alerts, selectedEvent, selectedPlatform]);

@@ -9,9 +9,15 @@ export function useAlerts() {
 
     useEffect(() => {
         try {
-            // In a static build, we just use the imported JSON
-            // If we wanted to fetch it dynamically (e.g. from a public URL), we could use fetch()
-            setAlerts(alertsData as AlertEvent[]);
+            const transformedData = (alertsData as any[]).map(item => ({
+                ...item,
+                event_count: Number(item.event_count || 0),
+                mediana: Number(item.mediana || 0),
+                max: Number(item.max || 0),
+                minimo: Number(item.minimo || 0),
+                weekday: Number(item.weekday || 0)
+            }));
+            setAlerts(transformedData as AlertEvent[]);
             setLoading(false);
         } catch (err) {
             console.error("Error loading alerts from JSON:", err);

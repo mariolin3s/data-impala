@@ -20,8 +20,9 @@ const platformLabels: Record<string, string> = {
 };
 
 export function EventGrid({ alerts, originalAlerts }: EventGridProps) {
-  // Group by date
-  const groupedByDate = alerts.reduce<Record<string, AlertEvent[]>>((acc, alert) => {
+  // Group by date with safety
+  const groupedByDate = (alerts || []).reduce<Record<string, AlertEvent[]>>((acc, alert) => {
+    if (!alert || !alert.date) return acc;
     if (!acc[alert.date]) {
       acc[alert.date] = [];
     }
@@ -31,36 +32,49 @@ export function EventGrid({ alerts, originalAlerts }: EventGridProps) {
 
   const dates = Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a));
 
-  if (alerts.length === 0) return null;
+  if (dates.length === 0) return (
+    <div className="text-center py-10 text-muted-foreground">
+      No hay eventos para mostrar
+    </div>
+  );
 
   return (
-    <Accordion type="multiple" defaultValue={[dates[0]]} className="space-y-4">
-      {dates.map((date) => (
-        <AccordionItem
-          key={date}
-          value={date}
-          className="bg-card border border-border rounded-xl overflow-hidden px-0"
-        >
-          <AccordionTrigger className="px-5 py-4 hover:no-underline hover:bg-muted/30 transition-colors">
-            <div className="flex items-center gap-3">
-              <span className="font-bold text-foreground">
-                {format(parseISO(date), "EEEE, d 'de' MMMM", { locale: es })}
-              </span>
+    <div className="space-y-8">
+      {dates.map((date) => {
+        let dateLabel = date;
+        try {
+          const parsed = parseISO(date);
+          if (parsed && !isNaN(parsed.getTime())) {
+            dateLabel = format(parsed, "EEEE, d 'de' MMMM", { locale: es });
+            // Capitalize first letter
+            dateLabel = dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1);
+          }
+        } catch (e) {
+          console.error("Invalid date:", date);
+        }
+
+        return (
+          <div key={date} className="space-y-3">
+            <div className="flex items-center gap-3 px-1">
+              <h3 className="font-bold text-lg text-foreground">
+                {dateLabel}
+              </h3>
               <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">
                 {groupedByDate[date].length} eventos
               </span>
             </div>
-          </AccordionTrigger>
-          <AccordionContent className="p-0 border-t border-border">
-            <div className="divide-y divide-border">
-              {groupedByDate[date].map((alert) => (
-                <EventRow key={alert.id} alert={alert} allAlerts={originalAlerts} />
-              ))}
+
+            <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+              <div className="divide-y divide-border">
+                {groupedByDate[date].map((alert) => (
+                  <EventRow key={alert.id} alert={alert} allAlerts={originalAlerts} />
+                ))}
+              </div>
             </div>
-          </AccordionContent>
-        </AccordionItem>
-      ))}
-    </Accordion>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
