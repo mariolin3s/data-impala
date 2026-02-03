@@ -120,9 +120,9 @@ const CustomDot = (props: any) => {
       <g>
         {isSelected && (
           <>
-            <circle cx={cx} cy={cy} r={18} fill={color} fillOpacity={0.3}>
-              <animate attributeName="r" values="18;22;18" dur="1.5s" repeatCount="indefinite" />
-              <animate attributeName="opacity" values="0.3;0.1;0.3" dur="1.5s" repeatCount="indefinite" />
+            <circle cx={cx} cy={cy} r={20} fill={color} fillOpacity={0.6}>
+              <animate attributeName="r" values="20;28;20" dur="0.8s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.6;0;0.6" dur="0.8s" repeatCount="indefinite" />
             </circle>
           </>
         )}
@@ -137,9 +137,9 @@ const CustomDot = (props: any) => {
   return (
     <g>
       {isSelected && (
-        <circle cx={cx} cy={cy} r={12} fill={color} fillOpacity={0.4}>
-          <animate attributeName="r" values="12;16;12" dur="1.5s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.4;0.1;0.4" dur="1.5s" repeatCount="indefinite" />
+        <circle cx={cx} cy={cy} r={14} fill={color} fillOpacity={0.8}>
+          <animate attributeName="r" values="14;22;14" dur="0.8s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.8;0.1;0.8" dur="0.8s" repeatCount="indefinite" />
         </circle>
       )}
       <circle cx={cx} cy={cy} r={5} fill={color} stroke="hsl(222, 47%, 11%)" strokeWidth={2} />
