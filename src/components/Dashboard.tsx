@@ -13,69 +13,29 @@ import { DateRange } from "react-day-picker";
 import { subDays, isWithinInterval, parseISO, startOfDay, endOfDay } from 'date-fns';
 
 export function Dashboard() {
-  const { alerts, loading, error } = useAlerts();
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: subDays(new Date(), 6),
-    to: new Date(),
+    from: subDays(new Date(), 7),
+    to: subDays(new Date(), 1),
   });
+  const { alerts, loading, error } = useAlerts(dateRange);
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
-  // Set initial date range if needed (latest data-centric range)
-  useEffect(() => {
-    if (alerts.length > 0) {
-      const dates = alerts.map(a => new Date(a.date).getTime());
-      const minDate = new Date(Math.min(...dates));
-      const maxDate = new Date(Math.max(...dates));
-
-      console.log('📊 Alert date range in data:', {
-        earliest: minDate.toISOString(),
-        latest: maxDate.toISOString(),
-        totalAlerts: alerts.length
-      });
-    }
-  }, [alerts]);
-
   const filteredAlerts = useMemo(() => {
     const data = alerts || [];
 
-    // Debug logging
-    console.log('🔍 Filtering alerts:', {
-      totalAlerts: data.length,
-      dateRange: dateRange ? {
-        from: dateRange.from?.toISOString(),
-        to: dateRange.to?.toISOString()
-      } : null,
-      sampleDates: data.slice(0, 5).map(a => a.date)
-    });
-
-    const filtered = data.filter((alert) => {
+    return data.filter((alert) => {
       if (!alert) return false;
-      if (dateRange?.from && dateRange?.to) {
-        const alertDate = parseISO(alert.date);
-        const rangeStart = startOfDay(dateRange.from);
-        const rangeEnd = endOfDay(dateRange.to);
 
-        const isInRange = isWithinInterval(alertDate, {
-          start: rangeStart,
-          end: rangeEnd
-        });
-
-        if (!isInRange) return false;
-      } else if (dateRange?.from) {
-        if (alert.date !== dateRange.from.toISOString().split('T')[0]) return false;
-      }
-
+      // Note: Date filtering is now primarily handled by useAlerts/Supabase
+      // but we keep this simple check for consistency with other filters
       if (selectedEvent && alert.event !== selectedEvent) return false;
       if (selectedPlatform && alert.platform !== selectedPlatform) return false;
       if (selectedStatus && alert.status !== selectedStatus) return false;
       return true;
     });
-
-    console.log('✅ Filtered results:', filtered.length);
-    return filtered;
-  }, [alerts, dateRange, selectedEvent, selectedPlatform, selectedStatus]);
+  }, [alerts, selectedEvent, selectedPlatform, selectedStatus]);
 
   const summary = useMemo<AlertSummary>(() => {
     return filteredAlerts.reduce(

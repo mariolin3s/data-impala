@@ -1,39 +1,78 @@
 import { useState, useEffect } from 'react';
 import { AlertEvent } from '@/types/alert';
 import { supabase } from '@/lib/supabase';
+import { DateRange } from "react-day-picker";
+import { format } from 'date-fns';
 
-export function useAlerts() {
+export function useAlerts(dateRange: DateRange | undefined) {
     const [alerts, setAlerts] = useState<AlertEvent[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
         async function fetchAlerts() {
+            if (!dateRange?.from || !dateRange?.to) {
+                setLoading(false);
+                return;
+            }
+
+            setLoading(true);
             try {
-                // Supabase has a hard limit of 1000 rows per request
-                // We need to paginate to get all data
+                const fromDate = format(dateRange.from, 'yyyy-MM-dd');
+                const toDate = format(dateRange.to, 'yyyy-MM-dd');
+
+                console.log(`🔍 Starting fetch for range: ${fromDate} to ${toDate}`);
+
                 let allData: any[] = [];
                 let from = 0;
                 const pageSize = 1000;
                 let hasMore = true;
+                let totalEstimated = 0;
 
+                // Initial fetch to get the first page and the total count
+                const { data: firstPage, error: firstError, count } = await supabase
+                    .from('iberdrola')
+                    .select('*', { count: 'exact' })
+                    .gte('date', fromDate)
+                    .lte('date', toDate)
+                    .order('date', { ascending: false })
+                    .range(0, pageSize - 1);
+
+                if (firstError) throw firstError;
+
+                if (firstPage) {
+                    allData = [...firstPage];
+                    totalEstimated = count || 0;
+                    console.log(`📄 Page 1 fetched: ${firstPage.length} rows. Total in range: ${totalEstimated}`);
+
+                    if (firstPage.length < pageSize || allData.length >= totalEstimated) {
+                        hasMore = false;
+                    } else {
+                        from = pageSize;
+                    }
+                } else {
+                    hasMore = false;
+                }
+
+                // Fetch subsequent pages if necessary
                 while (hasMore) {
+                    console.log(`⏳ Fetching next page starting at offset ${from}...`);
                     const { data, error: supabaseError } = await supabase
                         .from('iberdrola')
                         .select('*')
+                        .gte('date', fromDate)
+                        .lte('date', toDate)
                         .order('date', { ascending: false })
                         .range(from, from + pageSize - 1);
 
-                    if (supabaseError) {
-                        throw supabaseError;
-                    }
+                    if (supabaseError) throw supabaseError;
 
                     if (data && data.length > 0) {
                         allData = [...allData, ...data];
+                        console.log(`✅ Page fetched: ${data.length} rows. Progress: ${allData.length}/${totalEstimated}`);
                         from += pageSize;
 
-                        // If we got less than pageSize, we've reached the end
-                        if (data.length < pageSize) {
+                        if (data.length < pageSize || allData.length >= totalEstimated) {
                             hasMore = false;
                         }
                     } else {
@@ -41,7 +80,7 @@ export function useAlerts() {
                     }
                 }
 
-                // Transform data to ensure numeric fields are numbers
+                // Transform data
                 const transformedData = allData.map(item => ({
                     ...item,
                     event_count: Number(item.event_count || 0),
@@ -51,27 +90,23 @@ export function useAlerts() {
                     weekday: item.weekday ? String(item.weekday) : '0'
                 }));
 
-                // Debug logging
-                console.log('📥 Loaded from Supabase:', {
+                console.log('✨ Data fetch complete:', {
                     totalRecords: transformedData.length,
-                    sampleDates: transformedData.slice(0, 10).map(item => item.date),
-                    dateRange: transformedData.length > 0 ? {
-                        earliest: transformedData[transformedData.length - 1]?.date,
-                        latest: transformedData[0]?.date
-                    } : null
+                    totalFromSupabase: totalEstimated,
+                    range: { from: fromDate, to: toDate }
                 });
 
                 setAlerts(transformedData as AlertEvent[]);
                 setLoading(false);
             } catch (err) {
-                console.error("Error loading alerts from Supabase:", err);
+                console.error("❌ Error loading alerts from Supabase:", err);
                 setError(err instanceof Error ? err : new Error('Unknown error loading alerts'));
                 setLoading(false);
             }
         }
 
         fetchAlerts();
-    }, []);
+    }, [dateRange?.from, dateRange?.to]);
 
     return { alerts, loading, error };
 }
