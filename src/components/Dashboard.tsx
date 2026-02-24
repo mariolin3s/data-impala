@@ -1,16 +1,15 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useAlerts } from '@/hooks/useAlerts';
 import { AlertSummary, AlertEvent } from '@/types/alert';
 import { StatCard } from './StatCard';
 import { EventGrid } from './EventGrid';
 import { DateSelector } from './DateSelector';
-import { AlertFilters } from './AlertFilters';
-import { TrendChart } from './TrendChart';
+import { AlertFilters, SortBy, SortDir } from './AlertFilters';
 import { StatusHistoryChart } from './StatusHistoryChart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Activity, CheckCircle2, AlertTriangle, XCircle, Bell } from 'lucide-react';
 import { DateRange } from "react-day-picker";
-import { subDays, isWithinInterval, parseISO, startOfDay, endOfDay } from 'date-fns';
+import { subDays, format } from 'date-fns';
 
 export function Dashboard() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -21,21 +20,40 @@ export function Dashboard() {
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortBy>('platform_event');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+
+  /** True when the event+platform had no naranja/rojo alert the previous day */
+  const isNewAlert = (alert: AlertEvent, allAlerts: AlertEvent[]): boolean => {
+    if (alert.status === 'verde') return false;
+    const prevDate = format(subDays(new Date(alert.date), 1), 'yyyy-MM-dd');
+    return !allAlerts.some(
+      (a) =>
+        a.date === prevDate &&
+        a.event === alert.event &&
+        a.platform === alert.platform &&
+        (a.status === 'naranja' || a.status === 'rojo')
+    );
+  };
 
   const filteredAlerts = useMemo(() => {
     const data = alerts || [];
 
     return data.filter((alert) => {
       if (!alert) return false;
-
-      // Note: Date filtering is now primarily handled by useAlerts/Supabase
-      // but we keep this simple check for consistency with other filters
+      if (selectedStatus === 'nuevo') {
+        // Special case: only show alerts that are new vs the previous day
+        if (!isNewAlert(alert, data)) return false;
+      } else {
+        if (selectedStatus && alert.status !== selectedStatus) return false;
+      }
       if (selectedEvent && alert.event !== selectedEvent) return false;
       if (selectedPlatform && alert.platform !== selectedPlatform) return false;
-      if (selectedStatus && alert.status !== selectedStatus) return false;
+      if (searchQuery && !alert.event.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       return true;
     });
-  }, [alerts, selectedEvent, selectedPlatform, selectedStatus]);
+  }, [alerts, selectedEvent, selectedPlatform, selectedStatus, searchQuery]);
 
   const summary = useMemo<AlertSummary>(() => {
     return filteredAlerts.reduce(
@@ -51,15 +69,14 @@ export function Dashboard() {
   }, [filteredAlerts]);
 
   const criticalAlerts = useMemo(() => {
-    return filteredAlerts
-      .filter((a) => a.status === 'rojo' || a.status === 'naranja')
-      .sort((a, b) => (a.status === 'rojo' ? -1 : 1));
+    return filteredAlerts.filter((a) => a.status === 'rojo' || a.status === 'naranja');
   }, [filteredAlerts]);
 
   const clearFilters = () => {
     setSelectedEvent(null);
     setSelectedPlatform(null);
     setSelectedStatus(null);
+    setSearchQuery('');
   };
 
   if (loading) {
@@ -115,9 +132,15 @@ export function Dashboard() {
             selectedEvent={selectedEvent}
             selectedPlatform={selectedPlatform}
             selectedStatus={selectedStatus}
+            searchQuery={searchQuery}
+            sortBy={sortBy}
+            sortDir={sortDir}
             onEventChange={setSelectedEvent}
             onPlatformChange={setSelectedPlatform}
             onStatusChange={setSelectedStatus}
+            onSearchChange={setSearchQuery}
+            onSortByChange={setSortBy}
+            onSortDirToggle={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
             onClearFilters={clearFilters}
           />
         </div>
@@ -154,8 +177,6 @@ export function Dashboard() {
           <StatusHistoryChart alerts={filteredAlerts} />
         </div>
 
-        {/* Trend Chart removed from main layout */}
-
         {/* Tabs */}
         <Tabs defaultValue="alerts" className="space-y-6">
           <TabsList className="bg-muted/50 border border-border">
@@ -175,6 +196,8 @@ export function Dashboard() {
                 alerts={criticalAlerts}
                 originalAlerts={alerts}
                 dateRange={dateRange}
+                sortBy={sortBy}
+                sortDir={sortDir}
               />
             ) : (
               <div className="text-center py-12 text-muted-foreground">
@@ -191,6 +214,8 @@ export function Dashboard() {
                 alerts={filteredAlerts}
                 originalAlerts={alerts}
                 dateRange={dateRange}
+                sortBy={sortBy}
+                sortDir={sortDir}
               />
             ) : (
               <div className="text-center py-12 text-muted-foreground">

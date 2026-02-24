@@ -2,59 +2,115 @@ import { useState } from 'react';
 import { AlertEvent } from '@/types/alert';
 import { StatusBadge } from './StatusBadge';
 import { cn } from '@/lib/utils';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { TrendChart } from './TrendChart';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ChevronRight, Apple, Smartphone, Monitor } from 'lucide-react';
-
+import { ChevronRight, Apple, Smartphone, Monitor, Sparkles } from 'lucide-react';
 import { DateRange } from "react-day-picker";
+import { SortBy, SortDir } from './AlertFilters';
 
 interface EventGridProps {
   alerts: AlertEvent[];
-  originalAlerts: AlertEvent[]; // Added to provide full history to TrendChart
+  originalAlerts: AlertEvent[];
   dateRange?: DateRange;
+  sortBy?: SortBy;
+  sortDir?: SortDir;
 }
 
-const platformConfig: Record<string, { label: string; icon: any; color: string; bgColor: string }> = {
-  web: {
-    label: 'Web',
-    icon: Monitor,
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500/10 border-blue-500/20'
+const platformConfig: Record<string, { label: string; icon: any; color: string; bgColor: string; order: number }> = {
+  android: {
+    label: 'Android',
+    icon: Smartphone,
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-500/10 border-emerald-500/20',
+    order: 0,
   },
   ios: {
     label: 'iOS',
     icon: Apple,
     color: 'text-slate-400',
-    bgColor: 'bg-slate-500/10 border-slate-500/20'
+    bgColor: 'bg-slate-500/10 border-slate-500/20',
+    order: 1,
   },
-  android: {
-    label: 'Android',
-    icon: Smartphone,
-    color: 'text-emerald-500',
-    bgColor: 'bg-emerald-500/10 border-emerald-500/20'
+  web: {
+    label: 'Web',
+    icon: Monitor,
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10 border-blue-500/20',
+    order: 2,
   },
 };
 
-export function EventGrid({ alerts, originalAlerts, dateRange }: EventGridProps) {
-  // Group by date with safety
+const statusOrder: Record<string, number> = { rojo: 0, naranja: 1, verde: 2 };
+
+/** Returns true if this alert is "new" — the same event+platform had no alert (naranja/rojo) the day before. */
+function isNewAlert(alert: AlertEvent, allAlerts: AlertEvent[]): boolean {
+  if (alert.status === 'verde') return false;
+  const prevDate = format(subDays(parseISO(alert.date), 1), 'yyyy-MM-dd');
+  const hadAlertYesterday = allAlerts.some(
+    (a) =>
+      a.date === prevDate &&
+      a.event === alert.event &&
+      a.platform === alert.platform &&
+      (a.status === 'naranja' || a.status === 'rojo')
+  );
+  return !hadAlertYesterday;
+}
+
+function sortAlerts(alerts: AlertEvent[], sortBy: SortBy, sortDir: SortDir): AlertEvent[] {
+  const dir = sortDir === 'asc' ? 1 : -1;
+
+  return [...alerts].sort((a, b) => {
+    switch (sortBy) {
+      case 'platform_event': {
+        const platformDiff =
+          (platformConfig[a.platform]?.order ?? 99) - (platformConfig[b.platform]?.order ?? 99);
+        if (platformDiff !== 0) return platformDiff * dir;
+        return a.event.localeCompare(b.event) * dir;
+      }
+      case 'event_name':
+        return a.event.localeCompare(b.event) * dir;
+      case 'severity': {
+        const severityDiff = (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3);
+        if (severityDiff !== 0) return severityDiff * dir;
+        return a.event.localeCompare(b.event);
+      }
+      case 'deviation': {
+        const deviationA =
+          a.mediana === 0 ? (a.event_count > 0 ? 100 : 0) : ((a.event_count - a.mediana) / a.mediana) * 100;
+        const deviationB =
+          b.mediana === 0 ? (b.event_count > 0 ? 100 : 0) : ((b.event_count - b.mediana) / b.mediana) * 100;
+        return (deviationB - deviationA) * dir;
+      }
+      default:
+        return 0;
+    }
+  });
+}
+
+export function EventGrid({
+  alerts,
+  originalAlerts,
+  dateRange,
+  sortBy = 'platform_event',
+  sortDir = 'asc',
+}: EventGridProps) {
+  // Group by date
   const groupedByDate = (alerts || []).reduce<Record<string, AlertEvent[]>>((acc, alert) => {
     if (!alert || !alert.date) return acc;
-    if (!acc[alert.date]) {
-      acc[alert.date] = [];
-    }
+    if (!acc[alert.date]) acc[alert.date] = [];
     acc[alert.date].push(alert);
     return acc;
   }, {});
 
   const dates = Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a));
 
-  if (dates.length === 0) return (
-    <div className="text-center py-10 text-muted-foreground">
-      No hay eventos para mostrar
-    </div>
-  );
+  if (dates.length === 0)
+    return (
+      <div className="text-center py-10 text-muted-foreground">
+        No hay eventos para mostrar
+      </div>
+    );
 
   return (
     <div className="space-y-8">
@@ -64,19 +120,18 @@ export function EventGrid({ alerts, originalAlerts, dateRange }: EventGridProps)
           const parsed = parseISO(date);
           if (parsed && !isNaN(parsed.getTime())) {
             dateLabel = format(parsed, "EEEE, d 'de' MMMM", { locale: es });
-            // Capitalize first letter
             dateLabel = dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1);
           }
         } catch (e) {
-          console.error("Invalid date:", date);
+          console.error('Invalid date:', date);
         }
+
+        const sorted = sortAlerts(groupedByDate[date], sortBy, sortDir);
 
         return (
           <div key={date} className="space-y-3">
             <div className="flex items-center gap-3 px-1">
-              <h3 className="font-bold text-lg text-foreground">
-                {dateLabel}
-              </h3>
+              <h3 className="font-bold text-lg text-foreground">{dateLabel}</h3>
               <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">
                 {groupedByDate[date].length} eventos
               </span>
@@ -84,8 +139,8 @@ export function EventGrid({ alerts, originalAlerts, dateRange }: EventGridProps)
 
             <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
               <div className="divide-y divide-border">
-                {groupedByDate[date].map((alert) => (
-                  <EventRow key={alert.id} alert={alert} allAlerts={originalAlerts} dateRange={dateRange} />
+                {sorted.map((alert) => (
+                  <EventRow key={alert.id} alert={alert} allAlerts={originalAlerts} dateRange={dateRange} isNew={isNewAlert(alert, originalAlerts)} />
                 ))}
               </div>
             </div>
@@ -96,10 +151,11 @@ export function EventGrid({ alerts, originalAlerts, dateRange }: EventGridProps)
   );
 }
 
-function EventRow({ alert, allAlerts, dateRange }: { alert: AlertEvent; allAlerts: AlertEvent[]; dateRange?: DateRange }) {
+function EventRow({ alert, allAlerts, dateRange, isNew }: { alert: AlertEvent; allAlerts: AlertEvent[]; dateRange?: DateRange; isNew?: boolean }) {
   const [isExpanded, setIsExpanded] = useState(false);
+
   const calculatePercentage = () => {
-    if (!alert.mediana || alert.mediana === 0) return alert.event_count > 0 ? "+100" : "0";
+    if (!alert.mediana || alert.mediana === 0) return alert.event_count > 0 ? '+100' : '0';
     return ((alert.event_count - alert.mediana) / alert.mediana * 100).toFixed(1);
   };
 
@@ -111,9 +167,9 @@ function EventRow({ alert, allAlerts, dateRange }: { alert: AlertEvent; allAlert
       <div
         onClick={() => setIsExpanded(!isExpanded)}
         className={cn(
-          "px-5 py-4 flex items-center justify-between gap-4 transition-colors cursor-pointer",
-          "hover:bg-muted/50",
-          isExpanded && "bg-muted/20"
+          'px-5 py-4 flex items-center justify-between gap-4 transition-colors cursor-pointer',
+          'hover:bg-muted/50',
+          isExpanded && 'bg-muted/20'
         )}
       >
         <div className="flex items-center gap-4 min-w-0">
@@ -122,11 +178,13 @@ function EventRow({ alert, allAlerts, dateRange }: { alert: AlertEvent; allAlert
             <p className="font-medium text-foreground truncate flex items-center gap-2">
               {alert.event}
               {platformConfig[alert.platform] && (
-                <span className={cn(
-                  "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border capitalize",
-                  platformConfig[alert.platform].bgColor,
-                  platformConfig[alert.platform].color
-                )}>
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border capitalize',
+                    platformConfig[alert.platform].bgColor,
+                    platformConfig[alert.platform].color
+                  )}
+                >
                   {(() => {
                     const Icon = platformConfig[alert.platform].icon;
                     return <Icon className="h-3 w-3" />;
@@ -134,9 +192,16 @@ function EventRow({ alert, allAlerts, dateRange }: { alert: AlertEvent; allAlert
                   {platformConfig[alert.platform].label}
                 </span>
               )}
+              {isNew && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border bg-violet-500/15 border-violet-500/30 text-violet-400">
+                  <Sparkles className="h-2.5 w-2.5" />
+                  Nuevo
+                </span>
+              )}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5 font-medium">
-              Mediana: {alert.mediana.toLocaleString()} | Rango: {alert.minimo.toLocaleString()} - {alert.max.toLocaleString()}
+              Mediana: {alert.mediana.toLocaleString()} | Rango: {alert.minimo.toLocaleString()} -{' '}
+              {alert.max.toLocaleString()}
             </p>
           </div>
         </div>
@@ -147,19 +212,28 @@ function EventRow({ alert, allAlerts, dateRange }: { alert: AlertEvent; allAlert
               {alert.event_count.toLocaleString()}
             </p>
             <div className="flex items-center justify-end gap-1.5">
-              <span className={cn(
-                "text-[10px] font-bold px-1.5 py-0.5 rounded",
-                isPositive ? "bg-[hsl(var(--status-success))]/10 text-[hsl(var(--status-success))]" : "bg-[hsl(var(--status-critical))]/10 text-[hsl(var(--status-critical))]"
-              )}>
-                {isPositive ? '+' : ''}{percentage}%
+              <span
+                className={cn(
+                  'text-[10px] font-bold px-1.5 py-0.5 rounded',
+                  isPositive
+                    ? 'bg-[hsl(var(--status-success))]/10 text-[hsl(var(--status-success))]'
+                    : 'bg-[hsl(var(--status-critical))]/10 text-[hsl(var(--status-critical))]'
+                )}
+              >
+                {isPositive ? '+' : ''}
+                {percentage}%
               </span>
-              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">vs Mediana</span>
+              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                vs Mediana
+              </span>
             </div>
           </div>
-          <ChevronRight className={cn(
-            "h-4 w-4 text-muted-foreground transition-transform shrink-0",
-            isExpanded && "rotate-90"
-          )} />
+          <ChevronRight
+            className={cn(
+              'h-4 w-4 text-muted-foreground transition-transform shrink-0',
+              isExpanded && 'rotate-90'
+            )}
+          />
         </div>
       </div>
 
@@ -173,9 +247,7 @@ function EventRow({ alert, allAlerts, dateRange }: { alert: AlertEvent; allAlert
             selectedDate={alert.date}
           />
           <div className="mt-3 bg-muted/20 border border-border/50 rounded-lg p-3 text-sm">
-            <p className="text-muted-foreground leading-relaxed italic">
-              "{alert.alerta_info}"
-            </p>
+            <p className="text-muted-foreground leading-relaxed italic">"{alert.alerta_info}"</p>
           </div>
         </div>
       )}
