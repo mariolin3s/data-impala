@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAlerts } from '@/hooks/useAlerts';
 import { AlertSummary, AlertEvent } from '@/types/alert';
 import { StatCard } from './StatCard';
@@ -7,11 +8,17 @@ import { DateSelector } from './DateSelector';
 import { AlertFilters, SortBy, SortDir } from './AlertFilters';
 import { StatusHistoryChart } from './StatusHistoryChart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Activity, CheckCircle2, AlertTriangle, XCircle, Bell } from 'lucide-react';
+import { Activity, CheckCircle2, AlertTriangle, XCircle, Bell, LogOut } from 'lucide-react';
 import { DateRange } from "react-day-picker";
 import { subDays, format } from 'date-fns';
 
 export function Dashboard() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
+    navigate('/login');
+  };
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 7),
     to: subDays(new Date(), 1),
@@ -117,6 +124,14 @@ export function Dashboard() {
 
             <div className="flex items-center gap-4">
               <DateSelector range={dateRange} onRangeChange={setDateRange} />
+              <button
+                id="logout-button"
+                onClick={handleLogout}
+                title="Cerrar sesión"
+                className="h-9 w-9 rounded-lg border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
             </div>
           </div>
         </div>
