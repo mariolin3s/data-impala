@@ -2,8 +2,10 @@ import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Activity, Eye, EyeOff, LogIn } from 'lucide-react';
 
-const VALID_USER = 'admin';
-const VALID_PASS = 'Iber2018.';
+const VALID_USERS = [
+    { username: 'admin', password: 'Iber2018.' },
+    { username: 'mhinojo@lin3s.com', password: 'spain*1987' },
+];
 
 export default function LoginPage() {
     const navigate = useNavigate();
@@ -19,7 +21,7 @@ export default function LoginPage() {
         setLoading(true);
 
         setTimeout(() => {
-            if (username === VALID_USER && password === VALID_PASS) {
+            if (VALID_USERS.some(u => u.username === username && u.password === password)) {
                 localStorage.setItem('isAuthenticated', 'true');
                 navigate('/');
             } else {
