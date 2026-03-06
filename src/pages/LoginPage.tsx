@@ -4,7 +4,7 @@ import { Activity, Eye, EyeOff, LogIn } from 'lucide-react';
 
 const VALID_USERS = [
     { username: 'admin', password: 'Iber2018.' },
-    { username: 'mhinojo@lin3s.com', password: 'spain*1987' },
+    { username: 'mhinojo@lin3s.com', password: '1987' },
 ];
 
 export default function LoginPage() {
