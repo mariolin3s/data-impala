@@ -96,13 +96,17 @@ export function Dashboard() {
     );
   }, [filteredAlerts]);
 
-  const criticalAlerts = useMemo(() => {
+  const allCriticalAlerts = useMemo(() => {
     return filteredAlerts.filter((a) => a.status === 'rojo' || a.status === 'naranja');
   }, [filteredAlerts]);
 
   const stagnantAlerts = useMemo(() => {
     return filteredAlerts.filter((a) => isStagnantAlert(a, alerts || []));
   }, [filteredAlerts, alerts]);
+
+  const activeAlerts = useMemo(() => {
+    return allCriticalAlerts.filter((a) => !isStagnantAlert(a, alerts || []));
+  }, [allCriticalAlerts, alerts]);
 
   const clearFilters = () => {
     setSelectedEvent(null);
@@ -222,7 +226,11 @@ export function Dashboard() {
           <TabsList className="bg-muted/50 border border-border">
             <TabsTrigger value="alerts" className="data-[state=active]:bg-background">
               <Bell className="h-4 w-4 mr-2" />
-              Alertas ({criticalAlerts.length})
+              Alertas ({activeAlerts.length})
+            </TabsTrigger>
+            <TabsTrigger value="all_alerts" className="data-[state=active]:bg-background">
+              <AlertTriangle className="h-4 w-4 mr-2" />
+              Todas las Alertas ({allCriticalAlerts.length})
             </TabsTrigger>
             <TabsTrigger value="stagnant" className="data-[state=active]:bg-background">
               <Clock className="h-4 w-4 mr-2" />
@@ -235,9 +243,9 @@ export function Dashboard() {
           </TabsList>
 
           <TabsContent value="alerts" className="space-y-4">
-            {criticalAlerts.length > 0 ? (
+            {activeAlerts.length > 0 ? (
               <EventGrid
-                alerts={criticalAlerts}
+                alerts={activeAlerts}
                 originalAlerts={alerts}
                 dateRange={dateRange}
                 sortBy={sortBy}
@@ -247,7 +255,25 @@ export function Dashboard() {
               <div className="text-center py-12 text-muted-foreground">
                 <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-[hsl(var(--status-success))]" />
                 <p className="text-lg font-medium">Todo en orden</p>
-                <p className="text-sm">No hay alertas activas para los filtros seleccionados</p>
+                <p className="text-sm">No hay nuevas alertas activas para los filtros seleccionados</p>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="all_alerts" className="space-y-4">
+            {allCriticalAlerts.length > 0 ? (
+              <EventGrid
+                alerts={allCriticalAlerts}
+                originalAlerts={alerts}
+                dateRange={dateRange}
+                sortBy={sortBy}
+                sortDir={sortDir}
+              />
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-[hsl(var(--status-success))]" />
+                <p className="text-lg font-medium">Todo en orden</p>
+                <p className="text-sm">No hay alertas para los filtros seleccionados</p>
               </div>
             )}
           </TabsContent>

@@ -217,7 +217,7 @@ function EventRow({ alert, allAlerts, dateRange, isNew, isStagnant }: { alert: A
                 </span>
               )}
               {isStagnant && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border bg-amber-500/15 border-amber-500/30 text-amber-400 animate-pulse">
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border bg-amber-500/15 border-amber-500/30 text-amber-400">
                   <Clock className="h-2.5 w-2.5" />
                   Estancado
                 </span>
