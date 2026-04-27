@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { X, Filter, Search, ArrowUpDown, ArrowUp, ArrowDown, Sparkles } from 'lucide-react';
+import { X, Filter, Search, ArrowUpDown, ArrowUp, ArrowDown, Sparkles, Clock } from 'lucide-react';
 
 import { DateRange } from "react-day-picker";
 import { isWithinInterval, parseISO, startOfDay, endOfDay } from 'date-fns';
@@ -148,6 +148,12 @@ export function AlertFilters({
               <span className="flex items-center gap-1.5">
                 <Sparkles className="h-3 w-3 text-violet-400" />
                 Nuevo
+              </span>
+            </SelectItem>
+            <SelectItem value="estancado">
+              <span className="flex items-center gap-1.5">
+                <Clock className="h-3 w-3 text-amber-400" />
+                Eventos Estancados
               </span>
             </SelectItem>
           </SelectContent>

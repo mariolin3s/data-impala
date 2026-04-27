@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { TrendChart } from './TrendChart';
 import { format, parseISO, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ChevronRight, Apple, Smartphone, Monitor, Sparkles } from 'lucide-react';
+import { ChevronRight, Apple, Smartphone, Monitor, Sparkles, Clock } from 'lucide-react';
 import { DateRange } from "react-day-picker";
 import { SortBy, SortDir } from './AlertFilters';
 
@@ -55,6 +55,24 @@ function isNewAlert(alert: AlertEvent, allAlerts: AlertEvent[]): boolean {
       (a.status === 'naranja' || a.status === 'rojo')
   );
   return !hadAlertYesterday;
+}
+
+/** Returns true if this event+platform has been in 'rojo' for 7 consecutive days up to the alert date. */
+function isStagnantAlert(alert: AlertEvent, allAlerts: AlertEvent[]): boolean {
+  if (alert.status !== 'rojo') return false;
+  const alertDate = parseISO(alert.date);
+  for (let i = 0; i < 7; i++) {
+    const day = format(subDays(alertDate, i), 'yyyy-MM-dd');
+    const hasRojo = allAlerts.some(
+      (a) =>
+        a.date === day &&
+        a.event === alert.event &&
+        a.platform === alert.platform &&
+        a.status === 'rojo'
+    );
+    if (!hasRojo) return false;
+  }
+  return true;
 }
 
 function sortAlerts(alerts: AlertEvent[], sortBy: SortBy, sortDir: SortDir): AlertEvent[] {
@@ -140,7 +158,7 @@ export function EventGrid({
             <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
               <div className="divide-y divide-border">
                 {sorted.map((alert) => (
-                  <EventRow key={alert.id} alert={alert} allAlerts={originalAlerts} dateRange={dateRange} isNew={isNewAlert(alert, originalAlerts)} />
+                  <EventRow key={alert.id} alert={alert} allAlerts={originalAlerts} dateRange={dateRange} isNew={isNewAlert(alert, originalAlerts)} isStagnant={isStagnantAlert(alert, originalAlerts)} />
                 ))}
               </div>
             </div>
@@ -151,7 +169,7 @@ export function EventGrid({
   );
 }
 
-function EventRow({ alert, allAlerts, dateRange, isNew }: { alert: AlertEvent; allAlerts: AlertEvent[]; dateRange?: DateRange; isNew?: boolean }) {
+function EventRow({ alert, allAlerts, dateRange, isNew, isStagnant }: { alert: AlertEvent; allAlerts: AlertEvent[]; dateRange?: DateRange; isNew?: boolean; isStagnant?: boolean }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const calculatePercentage = () => {
@@ -196,6 +214,12 @@ function EventRow({ alert, allAlerts, dateRange, isNew }: { alert: AlertEvent; a
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border bg-violet-500/15 border-violet-500/30 text-violet-400">
                   <Sparkles className="h-2.5 w-2.5" />
                   Nuevo
+                </span>
+              )}
+              {isStagnant && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border bg-amber-500/15 border-amber-500/30 text-amber-400 animate-pulse">
+                  <Clock className="h-2.5 w-2.5" />
+                  Estancado
                 </span>
               )}
             </p>

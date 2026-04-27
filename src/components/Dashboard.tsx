@@ -8,7 +8,7 @@ import { DateSelector } from './DateSelector';
 import { AlertFilters, SortBy, SortDir } from './AlertFilters';
 import { StatusHistoryChart } from './StatusHistoryChart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Activity, CheckCircle2, AlertTriangle, XCircle, Bell, LogOut } from 'lucide-react';
+import { Activity, CheckCircle2, AlertTriangle, XCircle, Bell, LogOut, Clock } from 'lucide-react';
 import { DateRange } from "react-day-picker";
 import { subDays, format } from 'date-fns';
 
@@ -44,6 +44,24 @@ export function Dashboard() {
     );
   };
 
+  /** True when the event+platform has been 'rojo' for 7 consecutive days up to the alert date */
+  const isStagnantAlert = (alert: AlertEvent, allAlerts: AlertEvent[]): boolean => {
+    if (alert.status !== 'rojo') return false;
+    const alertDate = new Date(alert.date);
+    for (let i = 0; i < 7; i++) {
+      const day = format(subDays(alertDate, i), 'yyyy-MM-dd');
+      const hasRojo = allAlerts.some(
+        (a) =>
+          a.date === day &&
+          a.event === alert.event &&
+          a.platform === alert.platform &&
+          a.status === 'rojo'
+      );
+      if (!hasRojo) return false;
+    }
+    return true;
+  };
+
   const filteredAlerts = useMemo(() => {
     const data = alerts || [];
 
@@ -52,6 +70,9 @@ export function Dashboard() {
       if (selectedStatus === 'nuevo') {
         // Special case: only show alerts that are new vs the previous day
         if (!isNewAlert(alert, data)) return false;
+      } else if (selectedStatus === 'estancado') {
+        // Special case: only show stagnant alerts (rojo for 7+ consecutive days)
+        if (!isStagnantAlert(alert, data)) return false;
       } else {
         if (selectedStatus && alert.status !== selectedStatus) return false;
       }
@@ -78,6 +99,10 @@ export function Dashboard() {
   const criticalAlerts = useMemo(() => {
     return filteredAlerts.filter((a) => a.status === 'rojo' || a.status === 'naranja');
   }, [filteredAlerts]);
+
+  const stagnantAlerts = useMemo(() => {
+    return filteredAlerts.filter((a) => isStagnantAlert(a, alerts || []));
+  }, [filteredAlerts, alerts]);
 
   const clearFilters = () => {
     setSelectedEvent(null);
@@ -199,6 +224,10 @@ export function Dashboard() {
               <Bell className="h-4 w-4 mr-2" />
               Alertas ({criticalAlerts.length})
             </TabsTrigger>
+            <TabsTrigger value="stagnant" className="data-[state=active]:bg-background">
+              <Clock className="h-4 w-4 mr-2" />
+              Eventos Estancados ({stagnantAlerts.length})
+            </TabsTrigger>
             <TabsTrigger value="all" className="data-[state=active]:bg-background">
               <Activity className="h-4 w-4 mr-2" />
               Todos los eventos
@@ -219,6 +248,24 @@ export function Dashboard() {
                 <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-[hsl(var(--status-success))]" />
                 <p className="text-lg font-medium">Todo en orden</p>
                 <p className="text-sm">No hay alertas activas para los filtros seleccionados</p>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="stagnant" className="space-y-4">
+            {stagnantAlerts.length > 0 ? (
+              <EventGrid
+                alerts={stagnantAlerts}
+                originalAlerts={alerts}
+                dateRange={dateRange}
+                sortBy={sortBy}
+                sortDir={sortDir}
+              />
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-[hsl(var(--status-success))]" />
+                <p className="text-lg font-medium">Sin eventos estancados</p>
+                <p className="text-sm">No hay eventos en alerta roja durante 7 días consecutivos</p>
               </div>
             )}
           </TabsContent>
