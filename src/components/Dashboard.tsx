@@ -20,7 +20,7 @@ export function Dashboard() {
     navigate('/login');
   };
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: subDays(new Date(), 7),
+    from: subDays(new Date(), 14),
     to: subDays(new Date(), 1),
   });
   const { alerts, loading, error } = useAlerts(dateRange);
