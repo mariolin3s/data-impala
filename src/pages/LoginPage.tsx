@@ -45,7 +45,7 @@ export default function LoginPage() {
                     <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 shadow-lg">
                         <Activity className="h-8 w-8 text-primary" />
                     </div>
-                    <h1 className="text-2xl font-bold text-foreground">GA4 Alert Monitor</h1>
+                    <h1 className="text-2xl font-bold text-foreground">DATA IMPALA</h1>
                     <p className="text-sm text-muted-foreground mt-1">Monitorización de eventos</p>
                 </div>
 

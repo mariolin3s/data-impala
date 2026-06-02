@@ -3,6 +3,7 @@ export type AlertStatus = 'verde' | 'naranja' | 'rojo';
 export interface AlertEvent {
   date: string;
   event: string;
+  form_name?: string | null;
   platform: string;
   event_count: number;
   weekday: string;

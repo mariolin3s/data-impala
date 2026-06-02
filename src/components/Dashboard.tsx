@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAlerts } from '@/hooks/useAlerts';
 import { AlertSummary, AlertEvent } from '@/types/alert';
+import { sameSeries, normalizeFormName } from '@/lib/alerts';
 import { StatCard } from './StatCard';
 import { EventGrid } from './EventGrid';
 import { DateSelector } from './DateSelector';
@@ -26,25 +27,25 @@ export function Dashboard() {
   const { alerts, loading, error } = useAlerts(dateRange);
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
+  const [selectedFormName, setSelectedFormName] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('platform_event');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
 
-  /** True when the event+platform had no naranja/rojo alert the previous day */
+  /** True when the event+form_name+platform series had no naranja/rojo alert the previous day */
   const isNewAlert = (alert: AlertEvent, allAlerts: AlertEvent[]): boolean => {
     if (alert.status === 'verde') return false;
     const prevDate = format(subDays(new Date(alert.date), 1), 'yyyy-MM-dd');
     return !allAlerts.some(
       (a) =>
         a.date === prevDate &&
-        a.event === alert.event &&
-        a.platform === alert.platform &&
+        sameSeries(a, alert) &&
         (a.status === 'naranja' || a.status === 'rojo')
     );
   };
 
-  /** True when the event+platform has been 'rojo' for 7 consecutive days up to the alert date */
+  /** True when the event+form_name+platform series has been 'rojo' for 7 consecutive days up to the alert date */
   const isStagnantAlert = (alert: AlertEvent, allAlerts: AlertEvent[]): boolean => {
     if (alert.status !== 'rojo') return false;
     const alertDate = new Date(alert.date);
@@ -53,8 +54,7 @@ export function Dashboard() {
       const hasRojo = allAlerts.some(
         (a) =>
           a.date === day &&
-          a.event === alert.event &&
-          a.platform === alert.platform &&
+          sameSeries(a, alert) &&
           a.status === 'rojo'
       );
       if (!hasRojo) return false;
@@ -78,10 +78,22 @@ export function Dashboard() {
       }
       if (selectedEvent && alert.event !== selectedEvent) return false;
       if (selectedPlatform && alert.platform !== selectedPlatform) return false;
-      if (searchQuery && !alert.event.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      if (selectedFormName) {
+        // '__none__' filtra los eventos de flujo único (sin form_name)
+        const formName = normalizeFormName(alert.form_name);
+        if (selectedFormName === '__none__' ? formName !== '' : formName !== selectedFormName) {
+          return false;
+        }
+      }
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const matchesEvent = alert.event.toLowerCase().includes(q);
+        const matchesForm = normalizeFormName(alert.form_name).toLowerCase().includes(q);
+        if (!matchesEvent && !matchesForm) return false;
+      }
       return true;
     });
-  }, [alerts, selectedEvent, selectedPlatform, selectedStatus, searchQuery]);
+  }, [alerts, selectedEvent, selectedPlatform, selectedFormName, selectedStatus, searchQuery]);
 
   const summary = useMemo<AlertSummary>(() => {
     return filteredAlerts.reduce(
@@ -111,6 +123,7 @@ export function Dashboard() {
   const clearFilters = () => {
     setSelectedEvent(null);
     setSelectedPlatform(null);
+    setSelectedFormName(null);
     setSelectedStatus(null);
     setSearchQuery('');
   };
@@ -146,7 +159,7 @@ export function Dashboard() {
                 <Activity className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">GA4 Alert Monitor</h1>
+                <h1 className="text-xl font-bold text-foreground">DATA IMPALA</h1>
                 <p className="text-sm text-muted-foreground">Monitorización de eventos by Mario Hinojo</p>
               </div>
             </div>
@@ -175,12 +188,14 @@ export function Dashboard() {
             dateRange={dateRange}
             selectedEvent={selectedEvent}
             selectedPlatform={selectedPlatform}
+            selectedFormName={selectedFormName}
             selectedStatus={selectedStatus}
             searchQuery={searchQuery}
             sortBy={sortBy}
             sortDir={sortDir}
             onEventChange={setSelectedEvent}
             onPlatformChange={setSelectedPlatform}
+            onFormNameChange={setSelectedFormName}
             onStatusChange={setSelectedStatus}
             onSearchChange={setSearchQuery}
             onSortByChange={setSortBy}

@@ -31,7 +31,7 @@ export function useAlerts(dateRange: DateRange | undefined) {
 
                 // Initial fetch to get the first page and the total count
                 const { data: firstPage, error: firstError, count } = await supabase
-                    .from('iberdrola')
+                    .from('data_impala_iberdrola')
                     .select('*', { count: 'exact' })
                     .gte('date', fromDate)
                     .lte('date', toDate)
@@ -58,7 +58,7 @@ export function useAlerts(dateRange: DateRange | undefined) {
                 while (hasMore) {
                     console.log(`⏳ Fetching next page starting at offset ${from}...`);
                     const { data, error: supabaseError } = await supabase
-                        .from('iberdrola')
+                        .from('data_impala_iberdrola')
                         .select('*')
                         .gte('date', fromDate)
                         .lte('date', toDate)
@@ -87,7 +87,8 @@ export function useAlerts(dateRange: DateRange | undefined) {
                     mediana: Number(item.mediana || 0),
                     max: Number(item.max || 0),
                     minimo: Number(item.minimo || 0),
-                    weekday: item.weekday ? String(item.weekday) : '0'
+                    weekday: item.weekday ? String(item.weekday) : '0',
+                    form_name: item.form_name ?? null
                 }));
 
                 console.log('✨ Data fetch complete:', {

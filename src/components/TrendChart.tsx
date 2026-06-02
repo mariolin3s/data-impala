@@ -15,11 +15,13 @@ import { EventTrendData, TrendDataPoint } from '@/data/mockAlerts';
 import { AlertEvent } from '@/types/alert';
 import { startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns';
 import { DateRange } from "react-day-picker";
+import { normalizeFormName, hasFormName } from '@/lib/alerts';
 
 interface TrendChartProps {
   alerts: AlertEvent[];
   selectedEvent?: string | null;
   selectedPlatform?: string | null;
+  selectedFormName?: string | null;
   dateRange?: DateRange;
   selectedDate?: string; // Date of the alert being viewed
 }
@@ -147,15 +149,18 @@ const CustomDot = (props: any) => {
   );
 };
 
-export function TrendChart({ alerts, selectedEvent, selectedPlatform, dateRange, selectedDate }: TrendChartProps) {
+export function TrendChart({ alerts, selectedEvent, selectedPlatform, selectedFormName, dateRange, selectedDate }: TrendChartProps) {
   const eventData = useMemo(() => {
     if (!selectedEvent) return [];
 
+    const targetFormName = normalizeFormName(selectedFormName);
     const data = alerts || [];
     return data
       .filter(a => {
         if (!a || a.event !== selectedEvent) return false;
         if (selectedPlatform && a.platform !== selectedPlatform) return false;
+        // Restringir a la misma serie de form_name (incluye "sin formulario")
+        if (normalizeFormName(a.form_name) !== targetFormName) return false;
 
         // Filter by date range if provided
         if (dateRange?.from && dateRange?.to) {
@@ -178,7 +183,7 @@ export function TrendChart({ alerts, selectedEvent, selectedPlatform, dateRange,
         status: a.status || 'gris'
       }))
       .sort((a, b) => a.date.localeCompare(b.date));
-  }, [alerts, selectedEvent, selectedPlatform, dateRange]);
+  }, [alerts, selectedEvent, selectedPlatform, selectedFormName, dateRange]);
 
   if (!selectedEvent) return null;
 
@@ -188,6 +193,9 @@ export function TrendChart({ alerts, selectedEvent, selectedPlatform, dateRange,
         <div>
           <h4 className="text-sm font-semibold text-foreground">
             Tendencia de {selectedEvent}
+            {hasFormName(selectedFormName) && (
+              <span className="text-muted-foreground font-normal"> · {normalizeFormName(selectedFormName)}</span>
+            )}
           </h4>
         </div>
         <div className="flex items-center gap-3 text-[10px]">

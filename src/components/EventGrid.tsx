@@ -5,9 +5,10 @@ import { cn } from '@/lib/utils';
 import { TrendChart } from './TrendChart';
 import { format, parseISO, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ChevronRight, Apple, Smartphone, Monitor, Sparkles, Clock } from 'lucide-react';
+import { ChevronRight, Apple, Smartphone, Monitor, Sparkles, Clock, FileText } from 'lucide-react';
 import { DateRange } from "react-day-picker";
 import { SortBy, SortDir } from './AlertFilters';
+import { sameSeries, normalizeFormName, hasFormName } from '@/lib/alerts';
 
 interface EventGridProps {
   alerts: AlertEvent[];
@@ -43,21 +44,20 @@ const platformConfig: Record<string, { label: string; icon: any; color: string; 
 
 const statusOrder: Record<string, number> = { rojo: 0, naranja: 1, verde: 2 };
 
-/** Returns true if this alert is "new" — the same event+platform had no alert (naranja/rojo) the day before. */
+/** Returns true if this alert is "new" — the same event+form_name+platform series had no alert (naranja/rojo) the day before. */
 function isNewAlert(alert: AlertEvent, allAlerts: AlertEvent[]): boolean {
   if (alert.status === 'verde') return false;
   const prevDate = format(subDays(parseISO(alert.date), 1), 'yyyy-MM-dd');
   const hadAlertYesterday = allAlerts.some(
     (a) =>
       a.date === prevDate &&
-      a.event === alert.event &&
-      a.platform === alert.platform &&
+      sameSeries(a, alert) &&
       (a.status === 'naranja' || a.status === 'rojo')
   );
   return !hadAlertYesterday;
 }
 
-/** Returns true if this event+platform has been in 'rojo' for 7 consecutive days up to the alert date. */
+/** Returns true if this event+form_name+platform series has been in 'rojo' for 7 consecutive days up to the alert date. */
 function isStagnantAlert(alert: AlertEvent, allAlerts: AlertEvent[]): boolean {
   if (alert.status !== 'rojo') return false;
   const alertDate = parseISO(alert.date);
@@ -66,8 +66,7 @@ function isStagnantAlert(alert: AlertEvent, allAlerts: AlertEvent[]): boolean {
     const hasRojo = allAlerts.some(
       (a) =>
         a.date === day &&
-        a.event === alert.event &&
-        a.platform === alert.platform &&
+        sameSeries(a, alert) &&
         a.status === 'rojo'
     );
     if (!hasRojo) return false;
@@ -84,10 +83,15 @@ function sortAlerts(alerts: AlertEvent[], sortBy: SortBy, sortDir: SortDir): Ale
         const platformDiff =
           (platformConfig[a.platform]?.order ?? 99) - (platformConfig[b.platform]?.order ?? 99);
         if (platformDiff !== 0) return platformDiff * dir;
-        return a.event.localeCompare(b.event) * dir;
+        const eventDiff = a.event.localeCompare(b.event);
+        if (eventDiff !== 0) return eventDiff * dir;
+        return normalizeFormName(a.form_name).localeCompare(normalizeFormName(b.form_name)) * dir;
       }
-      case 'event_name':
-        return a.event.localeCompare(b.event) * dir;
+      case 'event_name': {
+        const eventDiff = a.event.localeCompare(b.event);
+        if (eventDiff !== 0) return eventDiff * dir;
+        return normalizeFormName(a.form_name).localeCompare(normalizeFormName(b.form_name)) * dir;
+      }
       case 'severity': {
         const severityDiff = (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3);
         if (severityDiff !== 0) return severityDiff * dir;
@@ -210,6 +214,12 @@ function EventRow({ alert, allAlerts, dateRange, isNew, isStagnant }: { alert: A
                   {platformConfig[alert.platform].label}
                 </span>
               )}
+              {hasFormName(alert.form_name) && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border bg-sky-500/10 border-sky-500/20 text-sky-400">
+                  <FileText className="h-2.5 w-2.5" />
+                  {normalizeFormName(alert.form_name)}
+                </span>
+              )}
               {isNew && (
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border bg-violet-500/15 border-violet-500/30 text-violet-400">
                   <Sparkles className="h-2.5 w-2.5" />
@@ -267,6 +277,7 @@ function EventRow({ alert, allAlerts, dateRange, isNew, isStagnant }: { alert: A
             alerts={allAlerts}
             selectedEvent={alert.event}
             selectedPlatform={alert.platform}
+            selectedFormName={alert.form_name}
             dateRange={dateRange}
             selectedDate={alert.date}
           />
