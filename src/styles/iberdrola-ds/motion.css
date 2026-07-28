@@ -1,0 +1,33 @@
+/* ==========================================================================
+   Iberdrola Design System — Motion tokens
+   Mirrors tokens.json → motion. See animations/motion.md for usage principles.
+   ========================================================================== */
+
+:root {
+  /* Durations */
+  --ib-duration-fast:   150ms;
+  --ib-duration-base:   250ms;
+  --ib-duration-slow:   400ms;
+  --ib-duration-slower: 700ms;
+
+  /* Easings */
+  --ib-ease-standard:   cubic-bezier(0.2, 0, 0, 1);
+  --ib-ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --ib-ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+  --ib-ease-spring:     cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Common composed transitions */
+  --ib-transition-base:  all var(--ib-duration-base) var(--ib-ease-standard);
+  --ib-transition-color: color var(--ib-duration-fast) var(--ib-ease-standard),
+                         background-color var(--ib-duration-fast) var(--ib-ease-standard),
+                         border-color var(--ib-duration-fast) var(--ib-ease-standard);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ib-duration-fast:   0ms;
+    --ib-duration-base:   0ms;
+    --ib-duration-slow:   0ms;
+    --ib-duration-slower: 0ms;
+  }
+}

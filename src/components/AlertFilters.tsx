@@ -100,7 +100,7 @@ export function AlertFilters({
   const SortDirIcon = sortDir === 'asc' ? ArrowUp : ArrowDown;
 
   return (
-    <div className="flex items-center justify-between gap-3 flex-wrap">
+    <div className="flex items-center justify-between gap-3 flex-wrap bg-card border border-border rounded-xl shadow-ib-sm p-4">
       {/* LEFT: filter controls */}
       <div className="flex flex-wrap items-end gap-3">
         <div className="flex items-center gap-2 text-sm text-muted-foreground h-9">
@@ -114,7 +114,7 @@ export function AlertFilters({
             value={selectedEvent || 'all'}
             onValueChange={(v) => onEventChange(v === 'all' ? null : v)}
           >
-            <SelectTrigger className="w-[160px] bg-muted/50 border-border">
+            <SelectTrigger className="w-[160px]">
               <SelectValue placeholder="Evento" />
             </SelectTrigger>
             <SelectContent>
@@ -134,7 +134,7 @@ export function AlertFilters({
             value={selectedPlatform || 'all'}
             onValueChange={(v) => onPlatformChange(v === 'all' ? null : v)}
           >
-            <SelectTrigger className="w-[140px] bg-muted/50 border-border">
+            <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Plataforma" />
             </SelectTrigger>
             <SelectContent>
@@ -155,7 +155,7 @@ export function AlertFilters({
               value={selectedFormName || 'all'}
               onValueChange={(v) => onFormNameChange(v === 'all' ? null : v)}
             >
-              <SelectTrigger className="w-[160px] bg-muted/50 border-border">
+              <SelectTrigger className="w-[160px]">
                 <SelectValue placeholder="Formulario" />
               </SelectTrigger>
               <SelectContent>
@@ -181,7 +181,7 @@ export function AlertFilters({
             value={selectedStatus || 'all'}
             onValueChange={(v) => onStatusChange(v === 'all' ? null : v)}
           >
-            <SelectTrigger className="w-[140px] bg-muted/50 border-border">
+            <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Estado" />
             </SelectTrigger>
             <SelectContent>
@@ -193,13 +193,13 @@ export function AlertFilters({
             ))}
             <SelectItem value="nuevo">
               <span className="flex items-center gap-1.5">
-                <Sparkles className="h-3 w-3 text-violet-400" />
+                <Sparkles className="h-3 w-3 text-violet-600" />
                 Nuevo
               </span>
             </SelectItem>
             <SelectItem value="estancado">
               <span className="flex items-center gap-1.5">
-                <Clock className="h-3 w-3 text-amber-400" />
+                <Clock className="h-3 w-3 text-amber-600" />
                 Eventos Estancados
               </span>
             </SelectItem>
@@ -230,7 +230,7 @@ export function AlertFilters({
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Buscar evento o formulario..."
-              className="pl-8 w-[200px] h-9 bg-muted/50 border-border text-sm"
+              className="pl-8 w-[200px] h-9 text-sm"
             />
           </div>
         </div>
@@ -243,7 +243,7 @@ export function AlertFilters({
               value={sortBy}
               onValueChange={(v) => onSortByChange(v as SortBy)}
             >
-              <SelectTrigger className="w-[180px] bg-muted/50 border-border">
+              <SelectTrigger className="w-[180px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -258,7 +258,7 @@ export function AlertFilters({
             <Button
               variant="outline"
               size="icon"
-              className="h-9 w-9 bg-muted/50 border-border shrink-0"
+              className="h-9 w-9 shrink-0"
               onClick={onSortDirToggle}
               title={sortDir === 'asc' ? 'Orden ascendente' : 'Orden descendente'}
             >

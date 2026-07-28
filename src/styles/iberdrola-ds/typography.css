@@ -1,0 +1,43 @@
+/* ==========================================================================
+   Iberdrola Design System — Typography tokens
+   Mirrors tokens.json → font.
+   The whole system's typeface is driven by --ib-font-brand (see fonts/fonts.css).
+   ========================================================================== */
+
+:root {
+  /* Font families */
+  --ib-font-brand: "Iberdrola", "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --ib-font-mono:  ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Weights */
+  --ib-weight-regular:  400;
+  --ib-weight-medium:   500;
+  --ib-weight-semibold: 600;
+  --ib-weight-bold:     700;
+
+  /* Fluid type scale */
+  --ib-text-display: clamp(2.75rem, 1.6rem + 4.6vw, 4.5rem);
+  --ib-text-h1:      clamp(2.25rem, 1.5rem + 3vw, 3.25rem);
+  --ib-text-h2:      clamp(1.75rem, 1.25rem + 2vw, 2.5rem);
+  --ib-text-h3:      clamp(1.375rem, 1.1rem + 1.1vw, 1.75rem);
+  --ib-text-h4:      1.25rem;
+  --ib-text-h5:      1.125rem;
+  --ib-text-h6:      1rem;
+  --ib-text-body-lg: 1.125rem;
+  --ib-text-body:    1rem;
+  --ib-text-body-sm: 0.875rem;
+  --ib-text-caption: 0.75rem;
+  --ib-text-overline: 0.75rem;
+
+  /* Line heights */
+  --ib-leading-tight:   1.1;
+  --ib-leading-snug:    1.25;
+  --ib-leading-normal:  1.5;
+  --ib-leading-relaxed: 1.7;
+
+  /* Letter spacing */
+  --ib-tracking-tight:   -0.02em;
+  --ib-tracking-normal:  0;
+  --ib-tracking-wide:    0.04em;
+  --ib-tracking-overline: 0.12em;
+}

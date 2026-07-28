@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Activity, Eye, EyeOff, LogIn } from 'lucide-react';
+import IberdrolaLogo from '@/components/IberdrolaLogo';
 
 const VALID_USERS = [
     { username: 'admin', password: 'Iber2018.' },
@@ -42,9 +43,7 @@ export default function LoginPage() {
             <div className="relative w-full max-w-md">
                 {/* Logo */}
                 <div className="flex flex-col items-center mb-8">
-                    <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 shadow-lg">
-                        <Activity className="h-8 w-8 text-primary" />
-                    </div>
+                    <IberdrolaLogo className="h-11 w-auto mb-6" />
                     <h1 className="text-2xl font-bold text-foreground">DATA IMPALA</h1>
                     <p className="text-sm text-muted-foreground mt-1">Monitorización de eventos</p>
                 </div>
@@ -67,7 +66,7 @@ export default function LoginPage() {
                                 onChange={(e) => setUsername(e.target.value)}
                                 placeholder="usuario"
                                 required
-                                className="w-full h-10 px-3 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors"
+                                className="w-full h-10 px-3 rounded-md border-[1.5px] border-input bg-card text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-[3px] focus:ring-ib-green-100 focus:border-primary transition-colors"
                             />
                         </div>
 
@@ -85,7 +84,7 @@ export default function LoginPage() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
                                     required
-                                    className="w-full h-10 pl-3 pr-10 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors"
+                                    className="w-full h-10 pl-3 pr-10 rounded-md border-[1.5px] border-input bg-card text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-[3px] focus:ring-ib-green-100 focus:border-primary transition-colors"
                                 />
                                 <button
                                     type="button"
@@ -114,7 +113,7 @@ export default function LoginPage() {
                             id="login-submit"
                             type="submit"
                             disabled={loading}
-                            className="w-full h-10 rounded-lg bg-primary text-primary-foreground font-medium text-sm flex items-center justify-center gap-2 hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+                            className="w-full h-10 rounded-full bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 hover:bg-ib-green-700 hover:-translate-y-px hover:shadow-ib-sm active:translate-y-0 active:shadow-none transition-all disabled:opacity-45 disabled:cursor-not-allowed mt-2"
                         >
                             {loading ? (
                                 <Activity className="h-4 w-4 animate-spin" />

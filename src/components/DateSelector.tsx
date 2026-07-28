@@ -21,10 +21,11 @@ export function DateSelector({ range, onRangeChange }: DateSelectorProps) {
             variant="outline"
             className={cn(
               "w-[300px] justify-start text-left font-normal",
-              "bg-muted/50 border-border hover:bg-muted"
+              // aspecto tipo input del DS: borde neutro, sin elevación en hover
+              "bg-card border-[1.5px] border-input text-foreground hover:bg-muted/50 hover:translate-y-0 hover:shadow-none"
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
+            <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
             {range?.from ? (
               range.to ? (
                 <>
@@ -39,7 +40,7 @@ export function DateSelector({ range, onRangeChange }: DateSelectorProps) {
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="end">
+        <PopoverContent className="w-auto p-0 rounded-lg shadow-ib-md" align="end">
           <Calendar
             initialFocus
             mode="range"

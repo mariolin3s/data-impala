@@ -130,8 +130,8 @@ const CustomDot = (props: any) => {
         )}
         <circle cx={cx} cy={cy} r={12} fill={color} fillOpacity={0.2} />
         <circle cx={cx} cy={cy} r={8} fill={color} fillOpacity={0.4} />
-        <circle cx={cx} cy={cy} r={5} fill={color} stroke="hsl(222, 47%, 11%)" strokeWidth={2} />
-        <text x={cx} y={cy + 1} textAnchor="middle" dominantBaseline="middle" fill="hsl(222, 47%, 11%)" fontSize={8} fontWeight="bold">!</text>
+        <circle cx={cx} cy={cy} r={5} fill={color} stroke="hsl(0, 0%, 100%)" strokeWidth={2} />
+        <text x={cx} y={cy + 1} textAnchor="middle" dominantBaseline="middle" fill="hsl(0, 0%, 100%)" fontSize={8} fontWeight="bold">!</text>
       </g>
     );
   }
@@ -144,7 +144,7 @@ const CustomDot = (props: any) => {
           <animate attributeName="opacity" values="0.8;0.1;0.8" dur="0.8s" repeatCount="indefinite" />
         </circle>
       )}
-      <circle cx={cx} cy={cy} r={5} fill={color} stroke="hsl(222, 47%, 11%)" strokeWidth={2} />
+      <circle cx={cx} cy={cy} r={5} fill={color} stroke="hsl(0, 0%, 100%)" strokeWidth={2} />
     </g>
   );
 };
@@ -208,7 +208,7 @@ export function TrendChart({ alerts, selectedEvent, selectedPlatform, selectedFo
             <span className="text-muted-foreground whitespace-nowrap">Rango esperado</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-[hsl(217,91%,60%)]" />
+            <div className="w-2 h-2 rounded-full bg-[hsl(152,38%,30%)]" />
             <span className="text-muted-foreground whitespace-nowrap">Event count</span>
           </div>
         </div>
@@ -223,7 +223,7 @@ export function TrendChart({ alerts, selectedEvent, selectedPlatform, selectedFo
                 <stop offset="95%" stopColor="hsl(142, 71%, 45%)" stopOpacity={0.02} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(217, 33%, 17%)" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(0, 0%, 89%)" vertical={false} />
             <XAxis
               dataKey="dayName"
               stroke="hsl(215, 20%, 55%)"
@@ -256,7 +256,7 @@ export function TrendChart({ alerts, selectedEvent, selectedPlatform, selectedFo
               stroke="hsl(142, 71%, 45%)"
               strokeWidth={1}
               strokeDasharray="4 4"
-              fill="hsl(222, 47%, 11%)"
+              fill="hsl(0, 0%, 100%)"
               fillOpacity={1}
             />
 
@@ -273,7 +273,7 @@ export function TrendChart({ alerts, selectedEvent, selectedPlatform, selectedFo
             <Line
               type="monotone"
               dataKey="value"
-              stroke="hsl(217, 91%, 60%)"
+              stroke="hsl(152, 38%, 30%)"
               strokeWidth={2}
               dot={<CustomDot selectedDate={selectedDate} />}
             />

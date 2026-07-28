@@ -1,92 +1,105 @@
+/* Iberdrola Design System — tokens vendorizados (fuente de verdad)
+   Repo: github.com/inakigorostiza/iberdrola-design-system */
+@import "./styles/iberdrola-ds/color.css";
+@import "./styles/iberdrola-ds/typography.css";
+@import "./styles/iberdrola-ds/spacing-radius-shadow.css";
+@import "./styles/iberdrola-ds/motion.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  /*
+   * TEMA IBERDROLA — mapeo del Iberdrola Design System a los tokens de shadcn.
+   * Los valores HSL derivan 1:1 de los tokens del DS (ver src/styles/iberdrola-ds/*
+   * y src/styles/brand-iberdrola.md). El hex de referencia va en el comentario.
+   */
   :root {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
+    --background: 100 9% 96%;         /* #F6F7F5 ib-bg-subtle */
+    --foreground: 0 0% 10%;           /* #1A1A1A ib-text-heading */
 
-    --card: 222 47% 9%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%;                /* #FFFFFF ib-bg-surface */
+    --card-foreground: 0 0% 20%;      /* #333333 ib-text-body */
 
-    --popover: 222 47% 9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 20%;
 
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 6%;
+    --primary: 145 100% 32%;          /* #00A443 ib-color-primary (green-500) */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 141 33% 93%;         /* #E8F3EC ib-tint-mint */
+    --secondary-foreground: 158 100% 14%; /* #004A2F ib-green-900 */
 
-    --muted: 217 33% 15%;
-    --muted-foreground: 215 20% 55%;
+    --muted: 100 9% 96%;              /* #F6F7F5 ib-neutral-50 */
+    --muted-foreground: 220 9% 46%;   /* #6B7280 ib-text-muted */
 
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 141 33% 93%;            /* #E8F3EC ib-tint-mint */
+    --accent-foreground: 158 100% 14%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 4 74% 49%;         /* #D92D20 ib-error */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 217 91% 60%;
+    --border: 90 8% 88%;              /* #E1E3DE ib-border */
+    --input: 80 6% 78%;               /* #C9CCC5 ib-border-strong */
+    --ring: 145 100% 32%;             /* #00A443 ib-focus-ring */
 
-    --radius: 0.75rem;
+    --radius: 1rem;                   /* 16px — ib-radius-lg */
 
-    /* Status colors */
-    --status-success: 142 71% 45%;
-    --status-success-bg: 142 71% 45% / 0.15;
-    --status-warning: 32 95% 55%;
-    --status-warning-bg: 32 95% 55% / 0.15;
-    --status-critical: 0 84% 60%;
-    --status-critical-bg: 0 84% 60% / 0.15;
+    /* Status colors (DS semantic; warning oscurecido para contraste en texto) */
+    --status-success: 145 100% 32%;   /* #00A443 ib-success */
+    --status-success-bg: 145 100% 32% / 0.12;
+    --status-warning: 33 92% 42%;     /* #E8850A ib-orange-600 (legible sobre blanco) */
+    --status-warning-bg: 34 100% 55% / 0.16;
+    --status-critical: 4 74% 49%;     /* #D92D20 ib-error */
+    --status-critical-bg: 4 74% 49% / 0.12;
 
-    /* Chart colors */
-    --chart-1: 217 91% 60%;
-    --chart-2: 142 71% 45%;
-    --chart-3: 32 95% 55%;
-    --chart-4: 0 84% 60%;
-    --chart-5: 280 65% 60%;
+    /* Chart colors — paleta del DS (verde, azul, naranja, error, forest) */
+    --chart-1: 145 100% 32%;          /* #00A443 green-500 */
+    --chart-2: 201 100% 53%;          /* #0DA9FF blue-500 */
+    --chart-3: 34 100% 55%;           /* #FF9C1A orange-500 */
+    --chart-4: 4 74% 49%;             /* #D92D20 error */
+    --chart-5: 158 100% 14%;          /* #004A2F forest */
 
-    --sidebar-background: 222 47% 6%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 217 91% 60%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 20%;
+    --sidebar-primary: 145 100% 32%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 15%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-accent: 141 33% 93%;
+    --sidebar-accent-foreground: 158 100% 14%;
+    --sidebar-border: 90 8% 88%;
+    --sidebar-ring: 145 100% 32%;
   }
 
+  /* Modo oscuro — equivalente al dark scope del DS ([data-ib-theme="dark"]) */
   .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
+    --background: 159 96% 12%;        /* #013D28 green-950 */
+    --foreground: 0 0% 100%;
 
-    --card: 222 47% 9%;
-    --card-foreground: 210 40% 98%;
+    --card: 158 76% 17%;              /* #0A4A33 bg-surface */
+    --card-foreground: 145 19% 87%;   /* #D9E5DE */
 
-    --popover: 222 47% 9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 158 76% 17%;
+    --popover-foreground: 145 19% 87%;
 
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 6%;
+    --primary: 144 56% 45%;           /* #33B568 green-400 */
+    --primary-foreground: 158 100% 8%;
 
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 158 100% 14%;        /* #004A2F green-900 */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 217 33% 15%;
-    --muted-foreground: 215 20% 55%;
+    --muted: 158 100% 14%;
+    --muted-foreground: 151 15% 67%;  /* #9FB8AC */
 
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 158 76% 17%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 4 74% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 217 91% 60%;
+    --border: 158 24% 24%;
+    --input: 158 24% 24%;
+    --ring: 144 56% 45%;
   }
 }
 
@@ -97,7 +110,16 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+    /* Tipografía del DS: Iberdrola (propietaria) → Figtree (sustituta oficial del DS) */
+    font-family: var(--ib-font-brand);
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Titulares con el peso e interletraje del DS */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: var(--ib-weight-bold);
+    letter-spacing: var(--ib-tracking-tight);
+    color: hsl(var(--foreground));
   }
 }
 
@@ -126,10 +148,12 @@
 
   .stat-card {
     @apply bg-card border border-border rounded-xl p-5 transition-all duration-200;
+    box-shadow: var(--ib-shadow-sm);
   }
 
   .stat-card:hover {
-    @apply border-muted-foreground/30;
+    @apply border-border;
+    box-shadow: var(--ib-shadow-md);
   }
 
   .alert-row {
@@ -147,7 +171,8 @@
 
 @layer utilities {
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400;
+    background: var(--ib-gradient-tricolor);
+    @apply bg-clip-text text-transparent;
   }
   
   .glow-primary {

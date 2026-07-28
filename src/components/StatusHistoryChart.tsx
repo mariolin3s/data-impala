@@ -116,7 +116,7 @@ export function StatusHistoryChart({ alerts }: StatusHistoryChartProps) {
   }, [alerts]);
 
   return (
-    <div className="bg-card border border-border rounded-xl p-5">
+    <div className="bg-card border border-border rounded-xl p-5 shadow-ib-sm">
       <div className="mb-4">
         <h3 className="font-semibold text-foreground">Distribución de Estados</h3>
         <p className="text-sm text-muted-foreground">Eventos por estado - Histórico</p>
@@ -125,7 +125,7 @@ export function StatusHistoryChart({ alerts }: StatusHistoryChartProps) {
       <div className="h-[220px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={dailyHistory} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(217, 33%, 17%)" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(0, 0%, 89%)" vertical={false} />
             <XAxis
               dataKey="dayName"
               stroke="hsl(215, 20%, 55%)"
@@ -143,7 +143,7 @@ export function StatusHistoryChart({ alerts }: StatusHistoryChartProps) {
               tickLine={false}
               axisLine={false}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(217, 33%, 17%)', opacity: 0.5 }} />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(0, 0%, 89%)', opacity: 0.5 }} />
             <Bar
               dataKey="verde"
               name="Normal"

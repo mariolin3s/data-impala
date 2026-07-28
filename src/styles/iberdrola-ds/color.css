@@ -1,0 +1,97 @@
+/* ==========================================================================
+   Iberdrola Design System — Color tokens
+   Mirrors tokens.json → color / gradient / semantic.
+   ========================================================================== */
+
+:root {
+  /* Brand green ramp */
+  --ib-green-50:  #EAF7EF;
+  --ib-green-100: #CDEBD9;
+  --ib-green-150: #E8F3EC;
+  --ib-green-200: #A6DFBB;
+  --ib-green-300: #6FCB91;
+  --ib-green-400: #33B568;
+  --ib-green-500: #00A443; /* PRIMARY */
+  --ib-green-600: #00913B;
+  --ib-green-700: #00823A; /* hover / active */
+  --ib-green-800: #006B33;
+  --ib-green-900: #004A2F; /* deep forest — dark bands */
+  --ib-green-950: #013D28;
+
+  /* Accents */
+  --ib-orange-300: #FFC170;
+  --ib-orange-500: #FF9C1A;
+  --ib-orange-600: #E8850A;
+  --ib-blue-300:   #7DCEFF;
+  --ib-blue-500:   #0DA9FF;
+  --ib-blue-600:   #008FE0;
+
+  /* Neutral ramp */
+  --ib-neutral-0:   #FFFFFF;
+  --ib-neutral-50:  #F6F7F5;
+  --ib-neutral-100: #EEEFEC;
+  --ib-neutral-200: #E1E3DE;
+  --ib-neutral-300: #C9CCC5;
+  --ib-neutral-400: #9DA29A;
+  --ib-neutral-500: #6B7280;
+  --ib-neutral-600: #4B5148;
+  --ib-neutral-700: #333333;
+  --ib-neutral-800: #242424;
+  --ib-neutral-900: #1A1A1A;
+
+  /* Soft section tints */
+  --ib-tint-mint:  #E8F3EC;
+  --ib-tint-peach: #FCEFE3;
+  --ib-tint-sky:   #E7F4FC;
+  --ib-tint-sand:  #FBF6EC;
+
+  /* Semantic */
+  --ib-success: #00A443;
+  --ib-warning: #FF9C1A;
+  --ib-error:   #D92D20;
+  --ib-info:    #0DA9FF;
+
+  /* Gradients */
+  --ib-gradient-tricolor: linear-gradient(120deg, #00A443 0%, #0DA9FF 55%, #FF9C1A 100%);
+  --ib-gradient-forest:   linear-gradient(160deg, #006B33 0%, #013D28 100%);
+
+  /* ---- Semantic role aliases (use these in components) ---- */
+  --ib-color-primary:        var(--ib-green-500);
+  --ib-color-primary-hover:  var(--ib-green-700);
+  --ib-color-primary-strong: var(--ib-green-900);
+  --ib-color-accent:         var(--ib-orange-500);
+  --ib-color-accent-hover:   var(--ib-orange-600);
+
+  --ib-bg-page:      var(--ib-neutral-0);
+  --ib-bg-subtle:    var(--ib-neutral-50);
+  --ib-bg-surface:   var(--ib-neutral-0);
+  --ib-bg-inverse:   var(--ib-green-900);
+
+  --ib-text-heading: var(--ib-neutral-900);
+  --ib-text-body:    var(--ib-neutral-700);
+  --ib-text-muted:   var(--ib-neutral-500);
+  --ib-text-inverse: var(--ib-neutral-0);
+  --ib-text-link:    var(--ib-green-700);
+
+  --ib-border:        var(--ib-neutral-200);
+  --ib-border-strong: var(--ib-neutral-300);
+  --ib-focus-ring:    var(--ib-green-500);
+}
+
+/* Optional dark theme scope. Apply data-ib-theme="dark" on any container. */
+[data-ib-theme="dark"] {
+  --ib-bg-page:    var(--ib-green-950);
+  --ib-bg-subtle:  var(--ib-green-900);
+  --ib-bg-surface: #0A4A33;
+  --ib-bg-inverse: var(--ib-neutral-0);
+
+  --ib-text-heading: var(--ib-neutral-0);
+  --ib-text-body:    #D9E5DE;
+  --ib-text-muted:   #9FB8AC;
+  --ib-text-inverse: var(--ib-neutral-900);
+  --ib-text-link:    var(--ib-blue-500);
+
+  --ib-border:        rgba(255, 255, 255, 0.14);
+  --ib-border-strong: rgba(255, 255, 255, 0.24);
+  --ib-color-primary: var(--ib-green-400);
+}

@@ -1,17 +1,18 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAlerts } from '@/hooks/useAlerts';
-import { AlertSummary, AlertEvent } from '@/types/alert';
-import { sameSeries, normalizeFormName } from '@/lib/alerts';
+import { AlertSummary } from '@/types/alert';
+import { normalizeFormName, isStagnantAlert, isNewAlert } from '@/lib/alerts';
 import { StatCard } from './StatCard';
 import { EventGrid } from './EventGrid';
 import { DateSelector } from './DateSelector';
 import { AlertFilters, SortBy, SortDir } from './AlertFilters';
 import { StatusHistoryChart } from './StatusHistoryChart';
+import IberdrolaLogo from './IberdrolaLogo';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Activity, CheckCircle2, AlertTriangle, XCircle, Bell, LogOut, Clock } from 'lucide-react';
 import { DateRange } from "react-day-picker";
-import { subDays, format } from 'date-fns';
+import { subDays } from 'date-fns';
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ export function Dashboard() {
     from: subDays(new Date(), 14),
     to: subDays(new Date(), 1),
   });
-  const { alerts, loading, error } = useAlerts(dateRange);
+  const { alerts, historyAlerts, loading, error } = useAlerts(dateRange);
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [selectedFormName, setSelectedFormName] = useState<string | null>(null);
@@ -32,35 +33,8 @@ export function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('platform_event');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
-
-  /** True when the event+form_name+platform series had no naranja/rojo alert the previous day */
-  const isNewAlert = (alert: AlertEvent, allAlerts: AlertEvent[]): boolean => {
-    if (alert.status === 'verde') return false;
-    const prevDate = format(subDays(new Date(alert.date), 1), 'yyyy-MM-dd');
-    return !allAlerts.some(
-      (a) =>
-        a.date === prevDate &&
-        sameSeries(a, alert) &&
-        (a.status === 'naranja' || a.status === 'rojo')
-    );
-  };
-
-  /** True when the event+form_name+platform series has been 'rojo' for 7 consecutive days up to the alert date */
-  const isStagnantAlert = (alert: AlertEvent, allAlerts: AlertEvent[]): boolean => {
-    if (alert.status !== 'rojo') return false;
-    const alertDate = new Date(alert.date);
-    for (let i = 0; i < 7; i++) {
-      const day = format(subDays(alertDate, i), 'yyyy-MM-dd');
-      const hasRojo = allAlerts.some(
-        (a) =>
-          a.date === day &&
-          sameSeries(a, alert) &&
-          a.status === 'rojo'
-      );
-      if (!hasRojo) return false;
-    }
-    return true;
-  };
+  // La lógica de "nuevo" y "estancado" vive en @/lib/alerts (fuente única) y se
+  // evalúa contra `historyAlerts`, que incluye el buffer de días previos al rango.
 
   const filteredAlerts = useMemo(() => {
     const data = alerts || [];
@@ -69,10 +43,10 @@ export function Dashboard() {
       if (!alert) return false;
       if (selectedStatus === 'nuevo') {
         // Special case: only show alerts that are new vs the previous day
-        if (!isNewAlert(alert, data)) return false;
+        if (!isNewAlert(alert, historyAlerts)) return false;
       } else if (selectedStatus === 'estancado') {
         // Special case: only show stagnant alerts (rojo for 7+ consecutive days)
-        if (!isStagnantAlert(alert, data)) return false;
+        if (!isStagnantAlert(alert, historyAlerts)) return false;
       } else {
         if (selectedStatus && alert.status !== selectedStatus) return false;
       }
@@ -93,7 +67,7 @@ export function Dashboard() {
       }
       return true;
     });
-  }, [alerts, selectedEvent, selectedPlatform, selectedFormName, selectedStatus, searchQuery]);
+  }, [alerts, historyAlerts, selectedEvent, selectedPlatform, selectedFormName, selectedStatus, searchQuery]);
 
   const summary = useMemo<AlertSummary>(() => {
     return filteredAlerts.reduce(
@@ -113,12 +87,12 @@ export function Dashboard() {
   }, [filteredAlerts]);
 
   const stagnantAlerts = useMemo(() => {
-    return filteredAlerts.filter((a) => isStagnantAlert(a, alerts || []));
-  }, [filteredAlerts, alerts]);
+    return filteredAlerts.filter((a) => isStagnantAlert(a, historyAlerts));
+  }, [filteredAlerts, historyAlerts]);
 
   const activeAlerts = useMemo(() => {
-    return allCriticalAlerts.filter((a) => !isStagnantAlert(a, alerts || []));
-  }, [allCriticalAlerts, alerts]);
+    return allCriticalAlerts.filter((a) => !isStagnantAlert(a, historyAlerts));
+  }, [allCriticalAlerts, historyAlerts]);
 
   const clearFilters = () => {
     setSelectedEvent(null);
@@ -155,12 +129,11 @@ export function Dashboard() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Activity className="h-5 w-5 text-primary" />
-              </div>
+              <IberdrolaLogo className="h-9 w-auto" />
+              <div className="h-8 w-px bg-border" />
               <div>
                 <h1 className="text-xl font-bold text-foreground">DATA IMPALA</h1>
-                <p className="text-sm text-muted-foreground">Monitorización de eventos by Mario Hinojo</p>
+                <p className="text-sm text-muted-foreground">Monitorización de eventos</p>
               </div>
             </div>
 
@@ -238,20 +211,21 @@ export function Dashboard() {
 
         {/* Tabs */}
         <Tabs defaultValue="alerts" className="space-y-6">
-          <TabsList className="bg-muted/50 border border-border">
-            <TabsTrigger value="alerts" className="data-[state=active]:bg-background">
+          {/* Pestañas estilo underline del DS (.ib-tabs / .ib-tab) */}
+          <TabsList className="h-auto w-full justify-start gap-6 rounded-none border-0 border-b border-border bg-transparent p-0 overflow-x-auto flex-nowrap">
+            <TabsTrigger value="alerts" className="rounded-none bg-transparent px-0 py-3 text-sm font-medium text-muted-foreground border-b-2 border-transparent -mb-px transition-colors hover:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:border-primary">
               <Bell className="h-4 w-4 mr-2" />
               Alertas ({activeAlerts.length})
             </TabsTrigger>
-            <TabsTrigger value="all_alerts" className="data-[state=active]:bg-background">
+            <TabsTrigger value="all_alerts" className="rounded-none bg-transparent px-0 py-3 text-sm font-medium text-muted-foreground border-b-2 border-transparent -mb-px transition-colors hover:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:border-primary">
               <AlertTriangle className="h-4 w-4 mr-2" />
               Todas las Alertas ({allCriticalAlerts.length})
             </TabsTrigger>
-            <TabsTrigger value="stagnant" className="data-[state=active]:bg-background">
+            <TabsTrigger value="stagnant" className="rounded-none bg-transparent px-0 py-3 text-sm font-medium text-muted-foreground border-b-2 border-transparent -mb-px transition-colors hover:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:border-primary">
               <Clock className="h-4 w-4 mr-2" />
               Eventos Estancados ({stagnantAlerts.length})
             </TabsTrigger>
-            <TabsTrigger value="all" className="data-[state=active]:bg-background">
+            <TabsTrigger value="all" className="rounded-none bg-transparent px-0 py-3 text-sm font-medium text-muted-foreground border-b-2 border-transparent -mb-px transition-colors hover:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:border-primary">
               <Activity className="h-4 w-4 mr-2" />
               Todos los eventos
             </TabsTrigger>
@@ -261,7 +235,7 @@ export function Dashboard() {
             {activeAlerts.length > 0 ? (
               <EventGrid
                 alerts={activeAlerts}
-                originalAlerts={alerts}
+                originalAlerts={historyAlerts}
                 dateRange={dateRange}
                 sortBy={sortBy}
                 sortDir={sortDir}
@@ -279,7 +253,7 @@ export function Dashboard() {
             {allCriticalAlerts.length > 0 ? (
               <EventGrid
                 alerts={allCriticalAlerts}
-                originalAlerts={alerts}
+                originalAlerts={historyAlerts}
                 dateRange={dateRange}
                 sortBy={sortBy}
                 sortDir={sortDir}
@@ -297,7 +271,7 @@ export function Dashboard() {
             {stagnantAlerts.length > 0 ? (
               <EventGrid
                 alerts={stagnantAlerts}
-                originalAlerts={alerts}
+                originalAlerts={historyAlerts}
                 dateRange={dateRange}
                 sortBy={sortBy}
                 sortDir={sortDir}
@@ -315,7 +289,7 @@ export function Dashboard() {
             {filteredAlerts.length > 0 ? (
               <EventGrid
                 alerts={filteredAlerts}
-                originalAlerts={alerts}
+                originalAlerts={historyAlerts}
                 dateRange={dateRange}
                 sortBy={sortBy}
                 sortDir={sortDir}
@@ -330,6 +304,13 @@ export function Dashboard() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-border mt-8">
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <p className="text-center text-xs text-muted-foreground">by Mario Hinojo</p>
+        </div>
+      </footer>
     </div>
   );
 }

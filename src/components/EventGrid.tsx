@@ -4,12 +4,12 @@ import { StatusBadge } from './StatusBadge';
 import { cn } from '@/lib/utils';
 import { TrendChart } from './TrendChart';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { format, parseISO, subDays } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ChevronRight, Apple, Smartphone, Monitor, Sparkles, Clock, FileText, Layers } from 'lucide-react';
 import { DateRange } from "react-day-picker";
 import { SortBy, SortDir } from './AlertFilters';
-import { sameSeries, normalizeFormName, hasFormName } from '@/lib/alerts';
+import { normalizeFormName, hasFormName, isStagnantAlert, isNewAlert } from '@/lib/alerts';
 
 interface EventGridProps {
   alerts: AlertEvent[];
@@ -20,25 +20,26 @@ interface EventGridProps {
 }
 
 const platformConfig: Record<string, { label: string; icon: any; color: string; bgColor: string; order: number }> = {
+  // Badges de plataforma con los tintes del DS (.ib-badge): verde / neutral / info
   android: {
     label: 'Android',
     icon: Smartphone,
-    color: 'text-emerald-500',
-    bgColor: 'bg-emerald-500/10 border-emerald-500/20',
+    color: 'text-ib-green-900',
+    bgColor: 'bg-ib-green-50 border-transparent',
     order: 0,
   },
   ios: {
     label: 'iOS',
     icon: Apple,
-    color: 'text-slate-400',
-    bgColor: 'bg-slate-500/10 border-slate-500/20',
+    color: 'text-foreground',
+    bgColor: 'bg-muted border-transparent',
     order: 1,
   },
   web: {
     label: 'Web',
     icon: Monitor,
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500/10 border-blue-500/20',
+    color: 'text-sky-700',
+    bgColor: 'bg-ib-tint-sky border-transparent',
     order: 2,
   },
 };
@@ -53,7 +54,7 @@ function PlatformBadge({ platform }: { platform: string }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border capitalize',
+        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border capitalize',
         config.bgColor,
         config.color
       )}
@@ -64,35 +65,9 @@ function PlatformBadge({ platform }: { platform: string }) {
   );
 }
 
-/** Returns true if this alert is "new" — the same event+form_name+platform series had no alert (naranja/rojo) the day before. */
-function isNewAlert(alert: AlertEvent, allAlerts: AlertEvent[]): boolean {
-  if (alert.status === 'verde') return false;
-  const prevDate = format(subDays(parseISO(alert.date), 1), 'yyyy-MM-dd');
-  const hadAlertYesterday = allAlerts.some(
-    (a) =>
-      a.date === prevDate &&
-      sameSeries(a, alert) &&
-      (a.status === 'naranja' || a.status === 'rojo')
-  );
-  return !hadAlertYesterday;
-}
-
-/** Returns true if this event+form_name+platform series has been in 'rojo' for 7 consecutive days up to the alert date. */
-function isStagnantAlert(alert: AlertEvent, allAlerts: AlertEvent[]): boolean {
-  if (alert.status !== 'rojo') return false;
-  const alertDate = parseISO(alert.date);
-  for (let i = 0; i < 7; i++) {
-    const day = format(subDays(alertDate, i), 'yyyy-MM-dd');
-    const hasRojo = allAlerts.some(
-      (a) =>
-        a.date === day &&
-        sameSeries(a, alert) &&
-        a.status === 'rojo'
-    );
-    if (!hasRojo) return false;
-  }
-  return true;
-}
+// isNewAlert e isStagnantAlert se importan de @/lib/alerts (fuente única).
+// El prop `originalAlerts` que reciben estos componentes ya incluye el buffer
+// de histórico previo al rango (ver useAlerts), imprescindible para evaluar la racha.
 
 function sortAlerts(alerts: AlertEvent[], sortBy: SortBy, sortDir: SortDir): AlertEvent[] {
   const dir = sortDir === 'asc' ? 1 : -1;
@@ -258,7 +233,7 @@ export function EventGrid({
               </span>
             </div>
 
-            <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-card border border-border rounded-xl overflow-hidden shadow-ib-sm">
               <div className="divide-y divide-border">
                 {groups.map((group) =>
                   group.isMulti ? (
@@ -316,23 +291,23 @@ function EventRow({ alert, allAlerts, dateRange, isNew, isStagnant, variant = 'd
           <StatusBadge status={alert.status} showLabel={false} />
           <div className="min-w-0">
             <p className="font-medium text-foreground truncate flex items-center gap-2">
-              {isFlow && <FileText className="h-3 w-3 text-sky-400 shrink-0" />}
+              {isFlow && <FileText className="h-3 w-3 text-sky-600 shrink-0" />}
               {primaryLabel}
               {!isFlow && <PlatformBadge platform={alert.platform} />}
               {!isFlow && hasFormName(alert.form_name) && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border bg-sky-500/10 border-sky-500/20 text-sky-400">
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold border bg-sky-500/10 border-sky-500/20 text-sky-600">
                   <FileText className="h-2.5 w-2.5" />
                   {normalizeFormName(alert.form_name)}
                 </span>
               )}
               {isNew && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border bg-violet-500/15 border-violet-500/30 text-violet-400">
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold border bg-violet-500/15 border-violet-500/30 text-violet-600">
                   <Sparkles className="h-2.5 w-2.5" />
                   Nuevo
                 </span>
               )}
               {isStagnant && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border bg-amber-500/15 border-amber-500/30 text-amber-400">
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold border bg-amber-500/15 border-amber-500/30 text-amber-600">
                   <Clock className="h-2.5 w-2.5" />
                   Estancado
                 </span>
@@ -424,7 +399,7 @@ function EventGroupRow({ group, allAlerts, dateRange }: { group: EventGroup; all
               <p className="font-medium text-foreground truncate flex items-center gap-2">
                 {group.event}
                 <PlatformBadge platform={group.platform} />
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border bg-sky-500/10 border-sky-500/20 text-sky-400">
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold border bg-sky-500/10 border-sky-500/20 text-sky-600">
                   <Layers className="h-2.5 w-2.5" />
                   {group.series.length} flujos
                 </span>
