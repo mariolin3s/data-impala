@@ -1,6 +1,5 @@
 import { AlertEvent } from '@/types/alert';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -8,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { X, Filter, Search, ArrowUpDown, ArrowUp, ArrowDown, Sparkles, Clock } from 'lucide-react';
+import { X, ArrowUpDown, ArrowUp, ArrowDown, Sparkles, Clock, Activity, MonitorSmartphone, FileText, CircleDot } from 'lucide-react';
 
 import { DateRange } from "react-day-picker";
 import { isWithinInterval, parseISO, startOfDay, endOfDay } from 'date-fns';
@@ -103,19 +102,17 @@ export function AlertFilters({
     <div className="flex items-center justify-between gap-3 flex-wrap bg-card border border-border rounded-xl shadow-ib-sm p-4">
       {/* LEFT: filter controls */}
       <div className="flex flex-wrap items-end gap-3">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground h-9">
-          <Filter className="h-4 w-4" />
-          <span>Filtrar:</span>
-        </div>
-
         <div className="flex flex-col gap-1">
           <label className="text-[11px] font-medium text-muted-foreground px-0.5">Evento</label>
           <Select
             value={selectedEvent || 'all'}
             onValueChange={(v) => onEventChange(v === 'all' ? null : v)}
           >
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Evento" />
+            <SelectTrigger className="w-[170px]">
+              <div className="flex items-center gap-2 min-w-0">
+                <Activity className="h-4 w-4 shrink-0 text-primary" />
+                <SelectValue placeholder="Evento" />
+              </div>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos los eventos</SelectItem>
@@ -134,8 +131,11 @@ export function AlertFilters({
             value={selectedPlatform || 'all'}
             onValueChange={(v) => onPlatformChange(v === 'all' ? null : v)}
           >
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Plataforma" />
+            <SelectTrigger className="w-[150px]">
+              <div className="flex items-center gap-2 min-w-0">
+                <MonitorSmartphone className="h-4 w-4 shrink-0 text-primary" />
+                <SelectValue placeholder="Plataforma" />
+              </div>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas</SelectItem>
@@ -155,8 +155,11 @@ export function AlertFilters({
               value={selectedFormName || 'all'}
               onValueChange={(v) => onFormNameChange(v === 'all' ? null : v)}
             >
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="Formulario" />
+              <SelectTrigger className="w-[170px]">
+                <div className="flex items-center gap-2 min-w-0">
+                  <FileText className="h-4 w-4 shrink-0 text-primary" />
+                  <SelectValue placeholder="Formulario" />
+                </div>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los formularios</SelectItem>
@@ -181,8 +184,11 @@ export function AlertFilters({
             value={selectedStatus || 'all'}
             onValueChange={(v) => onStatusChange(v === 'all' ? null : v)}
           >
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Estado" />
+            <SelectTrigger className="w-[150px]">
+              <div className="flex items-center gap-2 min-w-0">
+                <CircleDot className="h-4 w-4 shrink-0 text-primary" />
+                <SelectValue placeholder="Estado" />
+              </div>
             </SelectTrigger>
             <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
@@ -220,21 +226,8 @@ export function AlertFilters({
         )}
       </div>
 
-      {/* RIGHT: search + sort */}
+      {/* RIGHT: sort (la búsqueda vive ahora en el header) */}
       <div className="flex items-end gap-2">
-        <div className="flex flex-col gap-1">
-          <label className="text-[11px] font-medium text-muted-foreground px-0.5">Buscar</label>
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Buscar evento o formulario..."
-              className="pl-8 w-[200px] h-9 text-sm"
-            />
-          </div>
-        </div>
-
         <div className="flex flex-col gap-1">
           <label className="text-[11px] font-medium text-muted-foreground px-0.5">Ordenar por</label>
           <div className="flex items-center gap-1">

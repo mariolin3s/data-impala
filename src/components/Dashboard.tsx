@@ -3,14 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { useAlerts } from '@/hooks/useAlerts';
 import { AlertSummary } from '@/types/alert';
 import { normalizeFormName, isStagnantAlert, isNewAlert } from '@/lib/alerts';
+import { cn } from '@/lib/utils';
 import { StatCard } from './StatCard';
 import { EventGrid } from './EventGrid';
 import { DateSelector } from './DateSelector';
 import { AlertFilters, SortBy, SortDir } from './AlertFilters';
 import { StatusHistoryChart } from './StatusHistoryChart';
 import IberdrolaLogo from './IberdrolaLogo';
+import { HeaderSearch } from './HeaderSearch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Activity, CheckCircle2, AlertTriangle, XCircle, Bell, LogOut, Clock } from 'lucide-react';
+import { Activity, CheckCircle2, AlertTriangle, XCircle, Bell, LogOut, Clock, Filter, ChevronDown } from 'lucide-react';
 import { DateRange } from "react-day-picker";
 import { subDays } from 'date-fns';
 
@@ -33,6 +35,10 @@ export function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('platform_event');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Nº de filtros activos (para el badge del botón "Filtros"). La búsqueda vive en el header.
+  const activeFilterCount = [selectedEvent, selectedPlatform, selectedFormName, selectedStatus].filter(Boolean).length;
   // La lógica de "nuevo" y "estancado" vive en @/lib/alerts (fuente única) y se
   // evalúa contra `historyAlerts`, que incluye el buffer de días previos al rango.
 
@@ -137,7 +143,8 @@ export function Dashboard() {
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <HeaderSearch value={searchQuery} onChange={setSearchQuery} />
               <DateSelector range={dateRange} onRangeChange={setDateRange} />
               <button
                 id="logout-button"
@@ -154,27 +161,47 @@ export function Dashboard() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Filters */}
+        {/* Filters toggle */}
         <div className="mb-6">
-          <AlertFilters
-            alerts={alerts}
-            dateRange={dateRange}
-            selectedEvent={selectedEvent}
-            selectedPlatform={selectedPlatform}
-            selectedFormName={selectedFormName}
-            selectedStatus={selectedStatus}
-            searchQuery={searchQuery}
-            sortBy={sortBy}
-            sortDir={sortDir}
-            onEventChange={setSelectedEvent}
-            onPlatformChange={setSelectedPlatform}
-            onFormNameChange={setSelectedFormName}
-            onStatusChange={setSelectedStatus}
-            onSearchChange={setSearchQuery}
-            onSortByChange={setSortBy}
-            onSortDirToggle={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
-            onClearFilters={clearFilters}
-          />
+          <button
+            type="button"
+            onClick={() => setShowFilters((v) => !v)}
+            aria-expanded={showFilters}
+            className="inline-flex items-center gap-2 rounded-full border-[1.5px] border-input bg-card px-4 h-10 text-sm font-semibold text-foreground transition-colors hover:border-primary hover:text-primary"
+          >
+            <Filter className="h-4 w-4" />
+            Filtros
+            {activeFilterCount > 0 && (
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground">
+                {activeFilterCount}
+              </span>
+            )}
+            <ChevronDown className={cn('h-4 w-4 transition-transform', showFilters && 'rotate-180')} />
+          </button>
+
+          {showFilters && (
+            <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-200">
+              <AlertFilters
+                alerts={alerts}
+                dateRange={dateRange}
+                selectedEvent={selectedEvent}
+                selectedPlatform={selectedPlatform}
+                selectedFormName={selectedFormName}
+                selectedStatus={selectedStatus}
+                searchQuery={searchQuery}
+                sortBy={sortBy}
+                sortDir={sortDir}
+                onEventChange={setSelectedEvent}
+                onPlatformChange={setSelectedPlatform}
+                onFormNameChange={setSelectedFormName}
+                onStatusChange={setSelectedStatus}
+                onSearchChange={setSearchQuery}
+                onSortByChange={setSortBy}
+                onSortDirToggle={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+                onClearFilters={clearFilters}
+              />
+            </div>
+          )}
         </div>
 
         {/* Stats Grid */}
