@@ -46,6 +46,34 @@ Esta aplicación permite visualizar y gestionar alertas basadas en el tráfico y
 
 ## Changelog
 
+### 2026-07-30
+
+#### Filtro por tribu (equipo)
+- Nueva columna `tribu` en Supabase que indica el equipo dueño de cada evento. Añadida al tipo `AlertEvent`.
+- **Menú de tribus en el header** (`TribuSelector`): permite acotar todo el dashboard a una tribu, para que cada responsable vea solo sus eventos. La lista es **dinámica** (se extrae de los datos cargados; actualmente `core`, `fide`, `web_publica`) y la opción "Todas las tribus" restaura la vista completa.
+- El filtro se aplica de forma global: afecta a las tarjetas de resumen, al gráfico de distribución y a las cuatro pestañas de alertas. Es un ámbito independiente del panel "Filtros" (no cuenta en su badge ni lo resetea "Limpiar").
+- **Etiqueta de tribu en la tabla**: cada evento muestra un badge con su tribu junto a la etiqueta de formulario, para identificar de un vistazo a quién pertenece.
+
+---
+
+### 2026-07-29
+
+#### Corrección de la detección de "Eventos Estancados"
+- Resuelto un fallo por el que eventos caídos (rojo) más de 7 días no se etiquetaban como **Estancados** y seguían apareciendo en la pestaña de *Alertas*.
+- **Causa 1 — integridad de datos en la paginación**: la consulta a Supabase ordenaba solo por `date` (no único), lo que provocaba que la paginación por rango **saltara y duplicara filas** en los límites de página. Corregido añadiendo `id` como criterio de orden determinista (desempate).
+- **Causa 2 — falta de histórico previo**: la condición de "estancado" mira 7 días hacia atrás, pero los datos empezaban en el primer día del rango visible. Ahora `useAlerts` carga un **buffer de 7 días** anterior al rango y expone `historyAlerts` (buffer + rango, para cálculos) además de `alerts` (solo rango, para mostrar).
+- Unificada la lógica de `isStagnantAlert` e `isNewAlert` en `src/lib/alerts.ts` (antes duplicada y divergente entre `Dashboard` y `EventGrid`, con distinto manejo de fechas). Fuente única con `parseISO` y constante `STAGNANT_DAYS`.
+
+#### Buscador y filtros
+- El **buscador de eventos** se traslada al header como una **lupa que se despliega** al pulsarla; filtra el dashboard en tiempo real.
+- El **bloque de filtros pasa a ser plegable**: botón "Filtros" que lo muestra/oculta (oculto por defecto) con un **badge del nº de filtros activos**.
+- Añadidos iconos identificativos a cada filtro (Evento, Plataforma, Formulario, Estado).
+
+#### Layout
+- Eliminado el texto "by Mario Hinojo" del header; ahora se muestra en un **footer**.
+
+---
+
 ### 2026-02-24
 
 #### Ordenación y búsqueda de alertas

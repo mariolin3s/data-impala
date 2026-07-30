@@ -6,10 +6,11 @@ import { TrendChart } from './TrendChart';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ChevronRight, Apple, Smartphone, Monitor, Sparkles, Clock, FileText, Layers } from 'lucide-react';
+import { ChevronRight, Apple, Smartphone, Monitor, Sparkles, Clock, FileText, Layers, Users } from 'lucide-react';
 import { DateRange } from "react-day-picker";
 import { SortBy, SortDir } from './AlertFilters';
 import { normalizeFormName, hasFormName, isStagnantAlert, isNewAlert } from '@/lib/alerts';
+import { formatTribu } from './TribuSelector';
 
 interface EventGridProps {
   alerts: AlertEvent[];
@@ -61,6 +62,17 @@ function PlatformBadge({ platform }: { platform: string }) {
     >
       <Icon className="h-3 w-3" />
       {config.label}
+    </span>
+  );
+}
+
+/** Etiqueta de tribu (equipo) — color único (indigo), distinto del resto de badges. */
+function TribuBadge({ tribu }: { tribu?: string | null }) {
+  if (!tribu) return null;
+  return (
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold border bg-indigo-500/10 border-indigo-500/20 text-indigo-600">
+      <Users className="h-2.5 w-2.5" />
+      {formatTribu(tribu)}
     </span>
   );
 }
@@ -300,6 +312,7 @@ function EventRow({ alert, allAlerts, dateRange, isNew, isStagnant, variant = 'd
                   {normalizeFormName(alert.form_name)}
                 </span>
               )}
+              <TribuBadge tribu={alert.tribu} />
               {isNew && (
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold border bg-violet-500/15 border-violet-500/30 text-violet-600">
                   <Sparkles className="h-2.5 w-2.5" />
@@ -399,6 +412,9 @@ function EventGroupRow({ group, allAlerts, dateRange }: { group: EventGroup; all
               <p className="font-medium text-foreground truncate flex items-center gap-2">
                 {group.event}
                 <PlatformBadge platform={group.platform} />
+                {new Set(group.series.map((s) => s.tribu)).size === 1 && (
+                  <TribuBadge tribu={group.series[0].tribu} />
+                )}
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold border bg-sky-500/10 border-sky-500/20 text-sky-600">
                   <Layers className="h-2.5 w-2.5" />
                   {group.series.length} flujos

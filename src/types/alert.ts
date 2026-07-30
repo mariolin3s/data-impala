@@ -4,6 +4,7 @@ export interface AlertEvent {
   date: string;
   event: string;
   form_name?: string | null;
+  tribu?: string | null;
   platform: string;
   event_count: number;
   weekday: string;

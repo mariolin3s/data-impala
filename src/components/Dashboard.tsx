@@ -11,6 +11,7 @@ import { AlertFilters, SortBy, SortDir } from './AlertFilters';
 import { StatusHistoryChart } from './StatusHistoryChart';
 import IberdrolaLogo from './IberdrolaLogo';
 import { HeaderSearch } from './HeaderSearch';
+import { TribuSelector } from './TribuSelector';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Activity, CheckCircle2, AlertTriangle, XCircle, Bell, LogOut, Clock, Filter, ChevronDown } from 'lucide-react';
 import { DateRange } from "react-day-picker";
@@ -32,12 +33,19 @@ export function Dashboard() {
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [selectedFormName, setSelectedFormName] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [selectedTribu, setSelectedTribu] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('platform_event');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Nº de filtros activos (para el badge del botón "Filtros"). La búsqueda vive en el header.
+  // Tribus disponibles (dinámico según los datos cargados del rango) para el menú del header.
+  const uniqueTribus = useMemo(
+    () => [...new Set((alerts || []).map((a) => a.tribu).filter(Boolean) as string[])].sort(),
+    [alerts]
+  );
+
+  // Nº de filtros activos (para el badge del botón "Filtros"). La búsqueda y la tribu viven en el header.
   const activeFilterCount = [selectedEvent, selectedPlatform, selectedFormName, selectedStatus].filter(Boolean).length;
   // La lógica de "nuevo" y "estancado" vive en @/lib/alerts (fuente única) y se
   // evalúa contra `historyAlerts`, que incluye el buffer de días previos al rango.
@@ -56,6 +64,7 @@ export function Dashboard() {
       } else {
         if (selectedStatus && alert.status !== selectedStatus) return false;
       }
+      if (selectedTribu && alert.tribu !== selectedTribu) return false;
       if (selectedEvent && alert.event !== selectedEvent) return false;
       if (selectedPlatform && alert.platform !== selectedPlatform) return false;
       if (selectedFormName) {
@@ -73,7 +82,7 @@ export function Dashboard() {
       }
       return true;
     });
-  }, [alerts, historyAlerts, selectedEvent, selectedPlatform, selectedFormName, selectedStatus, searchQuery]);
+  }, [alerts, historyAlerts, selectedTribu, selectedEvent, selectedPlatform, selectedFormName, selectedStatus, searchQuery]);
 
   const summary = useMemo<AlertSummary>(() => {
     return filteredAlerts.reduce(
@@ -144,6 +153,7 @@ export function Dashboard() {
             </div>
 
             <div className="flex items-center gap-3">
+              <TribuSelector value={selectedTribu} onChange={setSelectedTribu} tribus={uniqueTribus} />
               <HeaderSearch value={searchQuery} onChange={setSearchQuery} />
               <DateSelector range={dateRange} onRangeChange={setDateRange} />
               <button
