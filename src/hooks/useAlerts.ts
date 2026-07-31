@@ -93,16 +93,20 @@ export function useAlerts(dateRange: DateRange | undefined) {
                     }
                 }
 
-                // Transform data
-                const transformedData = allData.map(item => ({
-                    ...item,
-                    event_count: Number(item.event_count || 0),
-                    mediana: Number(item.mediana || 0),
-                    max: Number(item.max || 0),
-                    minimo: Number(item.minimo || 0),
-                    weekday: item.weekday ? String(item.weekday) : '0',
-                    form_name: item.form_name ?? null
-                }));
+                // Transform data.
+                // Se excluyen los eventos con status 'gris' (aún no activos): son ruido
+                // y no deben aparecer en ninguna parte del dashboard ni en los cálculos.
+                const transformedData = allData
+                    .filter(item => item.status !== 'gris')
+                    .map(item => ({
+                        ...item,
+                        event_count: Number(item.event_count || 0),
+                        mediana: Number(item.mediana || 0),
+                        max: Number(item.max || 0),
+                        minimo: Number(item.minimo || 0),
+                        weekday: item.weekday ? String(item.weekday) : '0',
+                        form_name: item.form_name ?? null
+                    }));
 
                 // El buffer previo (queryFromDate..fromDate) se usa solo para cálculos
                 // (estancado/nuevo); lo que se muestra es únicamente el rango seleccionado.
