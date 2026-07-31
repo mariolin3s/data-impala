@@ -249,7 +249,7 @@ export function Dashboard() {
         {/* Tabs */}
         <Tabs defaultValue="alerts" className="space-y-6">
           {/* Pestañas estilo underline del DS (.ib-tabs / .ib-tab) */}
-          <TabsList className="h-auto w-full justify-start gap-6 rounded-none border-0 border-b border-border bg-transparent p-0 overflow-x-auto flex-nowrap">
+          <TabsList className="h-auto w-full flex-wrap justify-start gap-x-6 gap-y-1 rounded-none border-0 border-b border-border bg-transparent p-0">
             <TabsTrigger value="alerts" className="rounded-none bg-transparent px-0 py-3 text-sm font-medium text-muted-foreground border-b-2 border-transparent -mb-px transition-colors hover:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:border-primary">
               <Bell className="h-4 w-4 mr-2" />
               Alertas ({activeAlerts.length})
