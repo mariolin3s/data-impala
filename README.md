@@ -46,6 +46,14 @@ Esta aplicación permite visualizar y gestionar alertas basadas en el tráfico y
 
 ## Changelog
 
+### 2026-07-31
+
+#### Ocultar eventos no activos (status `gris`)
+- Los eventos con estado `gris` (aún no activos) dejan de mostrarse en el dashboard: eran ruido y desviaban la atención.
+- La exclusión se hace en el origen de datos (`useAlerts`), por lo que desaparecen de **todo**: tarjetas de resumen, gráfico de distribución, las cuatro pestañas, los desplegables de filtros y los cálculos de "estancado"/"nuevo".
+
+---
+
 ### 2026-07-30
 
 #### Filtro por tribu (equipo)
